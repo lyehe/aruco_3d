@@ -14,99 +14,99 @@ const loadDict = fetch('dict.json')
 // --- Sharp 5x7 Font for Digits (0-9) with Clear Holes ---
 const digitFont = {
     '0': [
-        [1,1,1,1,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,1,1,1,1]
+        [1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1]
     ],
     '1': [
-        [0,0,1,0,0],
-        [0,0,1,0,0],
-        [1,0,1,0,0],
-        [0,0,1,0,0],
-        [0,0,1,0,0],
-        [0,0,1,0,0],
-        [0,0,1,0,0]
+        [0, 0, 1, 0, 0],
+        [0, 1, 1, 0, 0],
+        [1, 0, 1, 0, 0],
+        [0, 0, 1, 0, 0],
+        [0, 0, 1, 0, 0],
+        [0, 0, 1, 0, 0],
+        [1, 1, 1, 1, 1]
     ],
     '2': [
-        [1,1,1,1,1],
-        [0,0,0,0,1],
-        [0,0,0,0,1],
-        [1,1,1,1,1],
-        [1,0,0,0,0],
-        [1,0,0,0,0],
-        [1,1,1,1,1]
+        [1, 1, 1, 1, 1],
+        [0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0],
+        [1, 1, 1, 1, 1]
     ],
     '3': [
-        [1,1,1,1,1],
-        [0,0,0,0,1],
-        [0,0,0,0,1],
-        [1,1,1,1,1],
-        [0,0,0,0,1],
-        [0,0,0,0,1],
-        [1,1,1,1,1]
+        [1, 1, 1, 1, 1],
+        [0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1],
+        [0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1]
     ],
     '4': [
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,1,1,1,1],
-        [0,0,0,0,1],
-        [0,0,0,0,1],
-        [0,0,0,0,1]
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1],
+        [0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 1]
     ],
     '5': [
-        [1,1,1,1,1],
-        [1,0,0,0,0],
-        [1,0,0,0,0],
-        [1,1,1,1,1],
-        [0,0,0,0,1],
-        [0,0,0,0,1],
-        [1,1,1,1,1]
+        [1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0],
+        [1, 1, 1, 1, 1],
+        [0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1]
     ],
     '6': [
-        [1,1,1,1,1],
-        [1,0,0,0,0],
-        [1,0,0,0,0],
-        [1,1,1,1,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,1,1,1,1]
+        [1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0],
+        [1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1]
     ],
     '7': [
-        [1,1,1,1,1],
-        [0,0,0,0,1],
-        [0,0,0,0,1],
-        [0,0,0,0,1],
-        [0,0,0,0,1],
-        [0,0,0,0,1],
-        [0,0,0,0,1]
+        [1, 1, 1, 1, 1],
+        [0, 0, 0, 0, 1],
+        [0, 0, 0, 1, 0],
+        [0, 0, 1, 0, 0],
+        [0, 1, 0, 0, 0],
+        [0, 1, 0, 0, 0],
+        [0, 1, 0, 0, 0]
     ],
     '8': [
-        [1,1,1,1,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,1,1,1,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,1,1,1,1]
+        [1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1]
     ],
     '9': [
-        [1,1,1,1,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,1,1,1,1],
-        [0,0,0,0,1],
-        [0,0,0,0,1],
-        [1,1,1,1,1]
+        [1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1],
+        [0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1]
     ]
 };
 
 
-function initThree() { /* ... same as before ... */ 
+function initThree() {
     const previewDiv = document.getElementById('stl-preview');
     const width = previewDiv.clientWidth;
     const height = previewDiv.clientHeight;
@@ -126,8 +126,8 @@ function initThree() { /* ... same as before ... */
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
     directionalLight.position.set(70, 120, 100);
     scene.add(directionalLight);
-    
-    const bottomLight = new THREE.DirectionalLight(0xccddee, 0.6); 
+
+    const bottomLight = new THREE.DirectionalLight(0xccddee, 0.6);
     bottomLight.position.set(0, -30, -50);
     scene.add(bottomLight);
 
@@ -135,14 +135,20 @@ function initThree() { /* ... same as before ... */
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.screenSpacePanning = false;
-    controls.target.set(0,0,0);
+    controls.target.set(0, 0, 0);
 
     function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
     animate();
-    window.addEventListener('resize', () => { /* ... */ });
+    window.addEventListener('resize', () => {
+        const newWidth = previewDiv.clientWidth;
+        const newHeight = previewDiv.clientHeight;
+        camera.aspect = newWidth / newHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(newWidth, newHeight);
+    });
 }
 
-function getArucoBitPattern(dictName, id, patternWidth, patternHeight) { /* ... same as before ... */
+function getArucoBitPattern(dictName, id, patternWidth, patternHeight) {
     const bytes = dict[dictName][id];
     const bits = [];
     const bitsCount = patternWidth * patternHeight;
@@ -157,15 +163,15 @@ function getArucoBitPattern(dictName, id, patternWidth, patternHeight) { /* ... 
         const row = [];
         for (let c = 0; c < fullPatternWidth; c++) {
             if (r === 0 || r === fullPatternHeight - 1 || c === 0 || c === fullPatternWidth - 1) {
-                row.push(0);
+                row.push(0); // Black border
             } else { row.push(bits[(r - 1) * patternWidth + (c - 1)]); }
         }
         fullPattern.push(row);
     }
     return fullPattern;
- }
+}
 
-function generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_baseThickness, z2_featureThickness, extrusionType, holeD, holeDepth) {
+function generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_baseThickness, z2_featureThickness, extrusionType) {
     if (markerObjectGroup) {
         scene.remove(markerObjectGroup);
         markerObjectGroup.traverse(child => {
@@ -193,57 +199,139 @@ function generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_baseThickne
         createFeatureCondition = (patternBit) => patternBit === 1;
     } else if (extrusionType === "flat") {
         basePlateMaterial = whiteMaterial; featureMaterial = blackMaterial;
-        featureHeightActual = 1e-5; baseHeightActual = z1_baseThickness;
+        featureHeightActual = 1e-5;
+        baseHeightActual = z1_baseThickness;
         createFeatureCondition = (patternBit) => patternBit === 0;
     } else {
         scene.add(markerObjectGroup); return markerObjectGroup;
     }
 
-    // Validate and limit hole depth
-    const maxHoleDepth = Math.max(0, baseHeightActual - 0.2);
-    const actualHoleDepth = Math.min(holeDepth, maxHoleDepth);
+    const engravingDepth = 0.8;
+    const actualEngravingDepth = Math.min(engravingDepth, Math.max(0, baseHeightActual - 1e-4));
 
-    // --- Create Marker (Front Face) ---
-    const baseCellGeometries = [];
-    const featureCellGeometries = [];
-    if (extrusionType === "flat") {
-        for (let r = 0; r < numRowsTotal; r++) {
-            for (let c = 0; c < numColsTotal; c++) {
-                const patternBit = fullPattern[r][c];
-                const cellGeo = new THREE.BoxGeometry(cellWidth, cellHeight, baseHeightActual);
-                cellGeo.translate(
-                    (c * cellWidth + cellWidth / 2) - (dimX / 2),
-                    -((r * cellHeight + cellHeight / 2) - (dimY / 2)),
-                    baseHeightActual / 2  
-                );
-                if (createFeatureCondition(patternBit)) {
-                    featureCellGeometries.push(cellGeo);
-                } else {
-                    baseCellGeometries.push(cellGeo);
+    const engraveCharHeight = Math.min(dimY * 0.15, 6);
+    const engraveCharPixelSize = engraveCharHeight / 7;
+    const engraveCharWidth = engraveCharPixelSize * 5;
+    const charSpacing = engraveCharPixelSize * 1.5;
+
+    const engraveGridCols = Math.ceil(dimX / engraveCharPixelSize);
+    const engraveGridRows = Math.ceil(dimY / engraveCharPixelSize);
+    const engravePixelActualWidth = dimX / engraveGridCols;
+    const engravePixelActualHeight = dimY / engraveGridRows;
+
+    let baseEngravingGrid = Array(engraveGridRows).fill(null).map(() => Array(engraveGridCols).fill(1));
+
+    const marginFromEdge = engraveCharPixelSize * 2;
+    const textBlockStartY = dimY / 2 - marginFromEdge;
+    let currentX_engraveCharOrigin = -dimX / 2 + marginFromEdge;
+
+    for (const char of markerIdStr) {
+        if (digitFont[char]) {
+            const digitPattern = digitFont[char];
+            for (let r_font = 0; r_font < 7; r_font++) {
+                for (let c_font = 0; c_font < 5; c_font++) {
+                    if (digitPattern[r_font][c_font] === 1) {
+                        // Calculate font pixel centers in NORMAL L-R, T-B orientation relative to marker's coordinate system
+                        const fontPixelCenterX_normal = currentX_engraveCharOrigin + (c_font * engraveCharPixelSize) + (engraveCharPixelSize / 2);
+                        const fontPixelCenterY_normal = textBlockStartY - (r_font * engraveCharPixelSize) - (engraveCharPixelSize / 2);
+
+                        // Convert to grid coordinates
+                        // For X (columns): calculate natural grid column, then mirror it across the grid's vertical centerline
+                        const gridC_natural = Math.floor((fontPixelCenterX_normal + dimX / 2) / engravePixelActualWidth);
+                        const gridC = engraveGridCols - 1 - gridC_natural; // <--- THIS IS THE CHANGE TO MIRROR HORIZONTALLY
+
+                        // For Y (rows): calculate natural grid row (no change here for horizontal mirroring)
+                        const gridR = Math.floor((-fontPixelCenterY_normal + dimY / 2) / engravePixelActualHeight);
+
+                        if (gridR >= 0 && gridR < engraveGridRows && gridC >= 0 && gridC < engraveGridCols) {
+                            baseEngravingGrid[gridR][gridC] = 0; // Mark this pixel for engraving
+                        }
+                    }
                 }
             }
         }
-        if (baseCellGeometries.length > 0) {
-            markerObjectGroup.add(new THREE.Mesh(THREE.BufferGeometryUtils.mergeBufferGeometries(baseCellGeometries), basePlateMaterial));
+        currentX_engraveCharOrigin += (engraveCharWidth + charSpacing);
+    }
+
+
+    if (extrusionType === "flat") {
+        const flatPlateBaseMatGeos = [];
+        const flatPlateFeatMatGeos = [];
+
+        for (let r_eng = 0; r_eng < engraveGridRows; r_eng++) {
+            for (let c_eng = 0; c_eng < engraveGridCols; c_eng++) {
+                const pixelCenterX = (c_eng * engravePixelActualWidth + engravePixelActualWidth / 2) - (dimX / 2);
+                const pixelCenterY = -((r_eng * engravePixelActualHeight + engravePixelActualHeight / 2) - (dimY / 2));
+
+                let currentPixelThickness, pixelZOffset;
+                if (baseEngravingGrid[r_eng][c_eng] === 1) { // Solid part
+                    currentPixelThickness = baseHeightActual;
+                    pixelZOffset = currentPixelThickness / 2; // Centered, bottom at z=0
+                } else { // Engraved part (recess from z=0)
+                    currentPixelThickness = Math.max(1e-5, baseHeightActual - actualEngravingDepth); // Thickness of material above recess
+                    pixelZOffset = actualEngravingDepth + currentPixelThickness / 2; // Position this material above the recess
+                }
+
+                if (currentPixelThickness < 1e-4 && baseEngravingGrid[r_eng][c_eng] === 0) continue; // Skip if engraved pixel is too thin (effectively a hole)
+
+
+                const pixelGeo = new THREE.BoxGeometry(engravePixelActualWidth, engravePixelActualHeight, currentPixelThickness);
+                pixelGeo.translate(pixelCenterX, pixelCenterY, pixelZOffset);
+
+                const arucoCol = Math.min(numColsTotal - 1, Math.max(0, Math.floor((pixelCenterX + dimX / 2) / cellWidth)));
+                const arucoRow = Math.min(numRowsTotal - 1, Math.max(0, Math.floor((-pixelCenterY + dimY / 2) / cellHeight)));
+                const patternBit = fullPattern[arucoRow][arucoCol];
+
+                if (createFeatureCondition(patternBit)) {
+                    flatPlateFeatMatGeos.push(pixelGeo);
+                } else {
+                    flatPlateBaseMatGeos.push(pixelGeo);
+                }
+            }
         }
-        if (featureCellGeometries.length > 0) {
-            markerObjectGroup.add(new THREE.Mesh(THREE.BufferGeometryUtils.mergeBufferGeometries(featureCellGeometries), featureMaterial));
+        if (flatPlateBaseMatGeos.length > 0) {
+            markerObjectGroup.add(new THREE.Mesh(THREE.BufferGeometryUtils.mergeBufferGeometries(flatPlateBaseMatGeos), basePlateMaterial));
         }
-    } else { 
-        if (baseHeightActual > 1e-5) {
-            const basePlateGeometry = new THREE.BoxGeometry(dimX, dimY, baseHeightActual);
-            basePlateGeometry.translate(0, 0, baseHeightActual / 2); 
-            markerObjectGroup.add(new THREE.Mesh(basePlateGeometry, basePlateMaterial));
+        if (flatPlateFeatMatGeos.length > 0) {
+            markerObjectGroup.add(new THREE.Mesh(THREE.BufferGeometryUtils.mergeBufferGeometries(flatPlateFeatMatGeos), featureMaterial));
         }
+    } else { // "positive" or "negative" extrusion
+        const basePlatePixelGeos = [];
+        for (let r_eng = 0; r_eng < engraveGridRows; r_eng++) {
+            for (let c_eng = 0; c_eng < engraveGridCols; c_eng++) {
+                const pixelCenterX = (c_eng * engravePixelActualWidth + engravePixelActualWidth / 2) - (dimX / 2);
+                const pixelCenterY = -((r_eng * engravePixelActualHeight + engravePixelActualHeight / 2) - (dimY / 2));
+
+                let currentPixelThickness, pixelZOffset;
+                if (baseEngravingGrid[r_eng][c_eng] === 1) { // Solid part
+                    currentPixelThickness = baseHeightActual;
+                    pixelZOffset = currentPixelThickness / 2; // Centered, bottom at z=0
+                } else { // Engraved part (recess from z=0)
+                    currentPixelThickness = Math.max(1e-5, baseHeightActual - actualEngravingDepth); // Thickness of material above recess
+                    pixelZOffset = actualEngravingDepth + currentPixelThickness / 2; // Position this material above the recess
+                }
+
+                if (currentPixelThickness < 1e-4 && baseEngravingGrid[r_eng][c_eng] === 0) continue;
+
+                const pixelGeo = new THREE.BoxGeometry(engravePixelActualWidth, engravePixelActualHeight, currentPixelThickness);
+                pixelGeo.translate(pixelCenterX, pixelCenterY, pixelZOffset);
+                basePlatePixelGeos.push(pixelGeo);
+            }
+        }
+        if (basePlatePixelGeos.length > 0) {
+            markerObjectGroup.add(new THREE.Mesh(THREE.BufferGeometryUtils.mergeBufferGeometries(basePlatePixelGeos), basePlateMaterial));
+        }
+
         if (featureHeightActual > 1e-5) {
-            for (let r = 0; r < numRowsTotal; r++) {
-                for (let c = 0; c < numColsTotal; c++) {
-                    if (createFeatureCondition(fullPattern[r][c])) {
+            const featureCellGeometries = [];
+            for (let r_aruco = 0; r_aruco < numRowsTotal; r_aruco++) {
+                for (let c_aruco = 0; c_aruco < numColsTotal; c_aruco++) {
+                    if (createFeatureCondition(fullPattern[r_aruco][c_aruco])) {
                         const featureGeo = new THREE.BoxGeometry(cellWidth, cellHeight, featureHeightActual);
                         featureGeo.translate(
-                            (c * cellWidth + cellWidth / 2) - (dimX / 2),
-                            -((r * cellHeight + cellHeight / 2) - (dimY / 2)),
-                            baseHeightActual + (featureHeightActual / 2) 
+                            (c_aruco * cellWidth + cellWidth / 2) - (dimX / 2),
+                            -((r_aruco * cellHeight + cellHeight / 2) - (dimY / 2)),
+                            baseHeightActual + (featureHeightActual / 2) // Features on top of the original base height
                         );
                         featureCellGeometries.push(featureGeo);
                     }
@@ -255,103 +343,6 @@ function generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_baseThickne
         }
     }
 
-    // --- Add Mounting Hole (if diameter > 0 and depth > 0) ---
-    if (holeD > 0 && actualHoleDepth > 0) {
-        const holeRadius = holeD / 2;
-        const holeGeometry = new THREE.CylinderGeometry(holeRadius, holeRadius, actualHoleDepth, 16);
-        // Position hole at center back, going from back surface into the base
-        holeGeometry.translate(0, 0, baseHeightActual - (actualHoleDepth / 2));
-        const holeMesh = new THREE.Mesh(holeGeometry, basePlateMaterial);
-        
-        // Use CSG-like approach by creating a "negative" hole geometry
-        // For simplicity, we'll create a visual representation
-        // In a real implementation, you'd use CSG operations
-        holeMesh.material = new THREE.MeshStandardMaterial({ 
-            color: 0x333333, 
-            metalness: 0.8, 
-            roughness: 0.2,
-            transparent: true,
-            opacity: 0.7
-        });
-        markerObjectGroup.add(holeMesh);
-    }
-
-    // --- "Engraved" ID on a Backing Layer (Top-Left Corner) ---
-    const backingPlateThickness = 0.4; 
-    const backingPlateZOffset = -backingPlateThickness / 2; 
-
-    const engraveCharHeight = Math.min(dimY * 0.15, 6); 
-    const engraveCharPixelSize = engraveCharHeight / 7;
-    const engraveCharWidth = engraveCharPixelSize * 5;
-    const charSpacing = engraveCharPixelSize * 1.5; 
-    
-    const marginFromEdge = engraveCharPixelSize * 1;
-    const startX = -dimX / 2 + marginFromEdge;
-    const startY = dimY / 2 - marginFromEdge; // Start from top instead of subtracting character height
-    
-    let currentX_engrave = startX;
-
-    const backingPlatePartsGeos = []; 
-    const backingGridCols = Math.ceil(dimX / engraveCharPixelSize); 
-    const backingGridRows = Math.ceil(dimY / engraveCharPixelSize);
-    const backingPixelActualWidth = dimX / backingGridCols;
-    const backingPixelActualHeight = dimY / backingGridRows;
-    let backingGrid = Array(backingGridRows).fill(null).map(() => Array(backingGridCols).fill(1));
-
-    // Convert markerIdStr to array and reverse it to flip the order
-    const reversedChars = markerIdStr.split('').reverse();
-    
-    for (const char of reversedChars) {
-        if (digitFont[char]) {
-            const digitPattern = digitFont[char]; 
-            for (let r_font = 0; r_font < 7; r_font++) {
-                for (let c_font = 0; c_font < 5; c_font++) {
-                    if (digitPattern[r_font][c_font] === 1) { 
-                        // Flip each digit horizontally by using (4 - c_font)
-                        const worldX = currentX_engrave + ((4 - c_font) * engraveCharPixelSize) + (engraveCharPixelSize / 2);
-                        const worldY = startY - (r_font * engraveCharPixelSize) - (engraveCharPixelSize / 2);
-
-                        const gridC = Math.floor((worldX + dimX / 2) / backingPixelActualWidth);
-                        const gridR = Math.floor((dimY / 2 - worldY) / backingPixelActualHeight); 
-
-                        if (gridR >= 0 && gridR < backingGridRows && gridC >= 0 && gridC < backingGridCols) {
-                            backingGrid[gridR][gridC] = 0; 
-                        }
-                    }
-                }
-            }
-        }
-        currentX_engrave += (engraveCharWidth + charSpacing);
-    }
-
-    // Create backing plate with hole cutout
-    for (let r_grid = 0; r_grid < backingGridRows; r_grid++) {
-        for (let c_grid = 0; c_grid < backingGridCols; c_grid++) {
-            if (backingGrid[r_grid][c_grid] === 1) {
-                const pixelCenterX = (c_grid * backingPixelActualWidth + backingPixelActualWidth / 2) - (dimX / 2);
-                const pixelCenterY = -((r_grid * backingPixelActualHeight + backingPixelActualHeight / 2) - (dimY / 2));
-                
-                // Skip pixels that are inside the mounting hole area
-                if (holeD > 0 && actualHoleDepth > 0) {
-                    const distanceFromCenter = Math.sqrt(pixelCenterX * pixelCenterX + pixelCenterY * pixelCenterY);
-                    if (distanceFromCenter <= holeD / 2) {
-                        continue; // Skip this pixel as it's inside the hole
-                    }
-                }
-                
-                const pixelGeo = new THREE.BoxGeometry(backingPixelActualWidth, backingPixelActualHeight, backingPlateThickness);
-                pixelGeo.translate(pixelCenterX, pixelCenterY, backingPlateZOffset);
-                backingPlatePartsGeos.push(pixelGeo);
-            }
-        }
-    }
-    
-    if (backingPlatePartsGeos.length > 0) {
-        const mergedBackingGeo = THREE.BufferGeometryUtils.mergeBufferGeometries(backingPlatePartsGeos);
-        let backingMaterialToUse = (extrusionType === "negative") ? blackMaterial : whiteMaterial;
-        markerObjectGroup.add(new THREE.Mesh(mergedBackingGeo, backingMaterialToUse));
-    }
-    
     scene.add(markerObjectGroup);
     return markerObjectGroup;
 }
@@ -363,41 +354,39 @@ function initControls() {
     const dimYInput = document.querySelector('.setup input[name=dimY]');
     const z1Input = document.querySelector('.setup input[name=z1]');
     const z2Input = document.querySelector('.setup input[name=z2]');
-    const holeDInput = document.querySelector('.setup input[name=holeD]');
-    const holeDepthInput = document.querySelector('.setup input[name=holeDepth]');
     const saveButton = document.querySelector('.save-button');
 
     function updateMarker() {
-        let markerIdNum = Number(markerIdInput.value); 
-        const markerIdStr = markerIdInput.value; 
+        let markerIdNum = Number(markerIdInput.value);
+        const markerIdStr = markerIdInput.value;
         const dimX = Number(dimXInput.value);
         const dimY = Number(dimYInput.value);
         const z1_base = Number(z1Input.value);
         const z2_feature = Number(z2Input.value);
-        const holeD = Number(holeDInput.value);
-        const holeDepth = Number(holeDepthInput.value);
         const extrusionType = document.querySelector('input[name="extrusion"]:checked').value;
 
         const option = dictSelect.options[dictSelect.selectedIndex];
         const dictName = option.value;
         const patternWidth = Number(option.getAttribute('data-width'));
         const patternHeight = Number(option.getAttribute('data-height'));
-        
+
         let maxId = 0;
-        if (dict && dict[dictName]) { maxId = dict[dictName].length - 1;
-        } else if (option.getAttribute('data-number')) { maxId = Number(option.getAttribute('data-number')) - 1;
-        } else { maxId = (dictName.includes("4x4"))?999:(dictName.includes("5x5"))?999:(dictName.includes("6x6_1000"))?999:(dictName.includes("7x7"))?999:(dictName==="mip_36h12")?249:(dictName==="april_16h5")?29:(dictName==="april_25h9")?34:(dictName==="april_36h10")?2319:(dictName==="april_36h11")?586:(dictName==="aruco")?1023:999; }
+        if (dict && dict[dictName]) {
+            maxId = dict[dictName].length - 1;
+        } else if (option.getAttribute('data-number')) {
+            maxId = Number(option.getAttribute('data-number')) - 1;
+        } else { maxId = (dictName.includes("4x4")) ? 999 : (dictName.includes("5x5")) ? 999 : (dictName.includes("6x6_1000")) ? 999 : (dictName.includes("7x7")) ? 999 : (dictName === "mip_36h12") ? 249 : (dictName === "april_16h5") ? 29 : (dictName === "april_25h9") ? 34 : (dictName === "april_36h10") ? 2319 : (dictName === "april_36h11") ? 586 : (dictName === "aruco") ? 1023 : 999; }
         markerIdInput.setAttribute('max', maxId);
         if (markerIdNum > maxId) { markerIdInput.value = maxId; markerIdNum = maxId; }
         if (markerIdNum < 0) { markerIdInput.value = 0; markerIdNum = 0; }
-        
-        if (dimX <= 0 || dimY <= 0 || z1_base <= 1e-5 || (extrusionType !== "flat" && z2_feature < 1e-5) ) {
-             if (markerObjectGroup) scene.remove(markerObjectGroup);
-             saveButton.removeAttribute('href'); saveButton.removeAttribute('download');
-             document.querySelector('.marker-id').innerHTML = 'Dimensions must be positive & > 0.00001mm.'; return;
+
+        if (dimX <= 0 || dimY <= 0 || z1_base <= 1e-5 || (extrusionType !== "flat" && z2_feature < 1e-5)) {
+            if (markerObjectGroup) scene.remove(markerObjectGroup);
+            saveButton.removeAttribute('href'); saveButton.removeAttribute('download');
+            document.querySelector('.marker-id').innerHTML = 'Dimensions must be positive & > 0.00001mm.'; return;
         }
-        
-        const z2_actual = (extrusionType === "flat") ? 1e-5 : z2_feature;
+
+        const z2_actual = (extrusionType === "flat") ? 1e-5 : z2_feature; // Use minimal for flat, actual for others
 
         loadDict.then(() => {
             if (dict && dict[dictName]) {
@@ -415,21 +404,25 @@ function initControls() {
             }
 
             const fullPattern = getArucoBitPattern(dictName, markerIdNum, patternWidth, patternHeight);
-            const currentMarkerMeshGroup = generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_base, z2_actual, extrusionType, holeD, holeDepth);
+            // Pass z1_base (base thickness from UI) and z2_actual (feature thickness from UI or 1e-5 for flat)
+            const currentMarkerMeshGroup = generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_base, z2_actual, extrusionType);
 
             const exporter = new THREE.STLExporter();
-            const stlString = exporter.parse(currentMarkerMeshGroup, { binary: false }); 
+            const stlString = exporter.parse(currentMarkerMeshGroup, { binary: false });
 
             saveButton.href = 'data:model/stl;base64,' + btoa(stlString);
-            const totalZforFile = (extrusionType === "flat") ? z1_base : z1_base + z2_actual;
-            const backingPlateThickness = 0.4; 
-            const fileNameTotalZ = totalZforFile + backingPlateThickness;
 
-            saveButton.download = `${dictName}-${markerIdNum}_${dimX}x${dimY}x${fileNameTotalZ.toFixed(2)}mm_${extrusionType}_engraved.stl`;
-            document.querySelector('.marker-id').innerHTML = `ID ${markerIdNum} (${dictName}) - ${extrusionType}`;
+            // Total Z height for filename: base + features (features are ~0 for flat)
+            // Engraving happens within z1_base, so it doesn't change the outer dimension.
+            const fileNameTotalZ = (extrusionType === "flat") ? z1_base : z1_base + z2_actual;
+
+            saveButton.download = `${dictName}-${markerIdNum}_${dimX}x${dimY}x${fileNameTotalZ.toFixed(2)}mm_${extrusionType}_engravedID.stl`;
+            document.querySelector('.marker-id').innerHTML = `ID ${markerIdNum} (${dictName}) - ${extrusionType} (ID engraved)`;
         }).catch(err => {
             console.error("Error loading/processing dictionary:", err);
             document.querySelector('.marker-id').innerHTML = 'Error loading dictionary';
+            if (markerObjectGroup) scene.remove(markerObjectGroup);
+            saveButton.removeAttribute('href'); saveButton.removeAttribute('download');
         });
     }
 
@@ -439,15 +432,94 @@ function initControls() {
     dimYInput.addEventListener('input', updateMarker);
     z1Input.addEventListener('input', updateMarker);
     z2Input.addEventListener('input', updateMarker);
-    holeDInput.addEventListener('input', updateMarker);
-    holeDepthInput.addEventListener('input', updateMarker);
     document.querySelectorAll('input[name="extrusion"]').forEach(radio => {
         radio.addEventListener('change', updateMarker);
     });
-    loadDict.then(updateMarker).catch(err => { /* ... */ });
+    loadDict.then(updateMarker).catch(err => {
+        console.error("Initial dictionary load failed:", err);
+        document.querySelector('.marker-id').innerHTML = 'Error: Could not load dictionary data.';
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Ensure THREE.BufferGeometryUtils is available if you haven't included it elsewhere
+    if (typeof THREE.BufferGeometryUtils === 'undefined') {
+        // Basic merge function if BufferGeometryUtils is not found (less efficient)
+        // For production, include the official THREE.BufferGeometryUtils from examples/jsm/utils
+        console.warn("THREE.BufferGeometryUtils not found. Using basic fallback merge (less efficient).");
+        THREE.BufferGeometryUtils = {
+            mergeBufferGeometries: function (geometries) {
+                if (!geometries || geometries.length === 0) return null;
+                const mergedGeometry = new THREE.BufferGeometry();
+                const attributes = {};
+                let totalVertices = 0;
+                let totalIndices = 0;
+                let hasIndices = false;
+
+                geometries.forEach(geometry => {
+                    if (!geometry) return;
+                    if (geometry.index) hasIndices = true;
+                    totalVertices += geometry.attributes.position.count;
+                    if (geometry.index) totalIndices += geometry.index.count;
+
+                    for (const name in geometry.attributes) {
+                        if (!attributes[name]) {
+                            attributes[name] = {
+                                array: [],
+                                itemSize: geometry.attributes[name].itemSize,
+                                normalized: geometry.attributes[name].normalized
+                            };
+                        }
+                    }
+                });
+
+                const mergedPositions = new Float32Array(totalVertices * 3);
+                let mergedNormals;
+                if (attributes.normal) mergedNormals = new Float32Array(totalVertices * 3);
+                let mergedUvs;
+                if (attributes.uv) mergedUvs = new Float32Array(totalVertices * 2);
+
+                let mergedIndices;
+                if (hasIndices) mergedIndices = new Uint32Array(totalIndices);
+
+
+                let vertexOffset = 0;
+                let indexOffset = 0;
+
+                geometries.forEach(geometry => {
+                    if (!geometry) return;
+                    mergedPositions.set(geometry.attributes.position.array, vertexOffset * 3);
+                    if (mergedNormals && geometry.attributes.normal) {
+                        mergedNormals.set(geometry.attributes.normal.array, vertexOffset * 3);
+                    }
+                    if (mergedUvs && geometry.attributes.uv) {
+                        mergedUvs.set(geometry.attributes.uv.array, vertexOffset * 2);
+                    }
+
+                    if (hasIndices && geometry.index) {
+                        for (let i = 0; i < geometry.index.count; i++) {
+                            mergedIndices[indexOffset + i] = geometry.index.array[i] + vertexOffset;
+                        }
+                        indexOffset += geometry.index.count;
+                    }
+                    vertexOffset += geometry.attributes.position.count;
+                });
+
+                mergedGeometry.setAttribute('position', new THREE.BufferAttribute(mergedPositions, 3));
+                if (mergedNormals) mergedGeometry.setAttribute('normal', new THREE.BufferAttribute(mergedNormals, 3));
+                if (mergedUvs) mergedGeometry.setAttribute('uv', new THREE.BufferAttribute(mergedUvs, 2));
+                if (hasIndices) mergedGeometry.setIndex(new THREE.BufferAttribute(mergedIndices, 1));
+
+                if (!mergedNormals && !hasIndices) mergedGeometry.computeVertexNormals();
+                else if (!mergedNormals && hasIndices) mergedGeometry.computeVertexNormals();
+
+
+                return mergedGeometry;
+            }
+        };
+    }
+
+
     initThree();
     initControls();
 });
