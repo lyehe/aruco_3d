@@ -46,12 +46,8 @@
             <input id="frm-id" name="id" type="number" min="0" max="999" value="0">
         </div>
         <div class="field">
-            <label for="frm-dim-x">Marker X dim (mm):</label>
-            <input id="frm-dim-x" name="dimX" type="number" min="10" max="500" value="50">
-        </div>
-        <div class="field">
-            <label for="frm-dim-y">Marker Y dim (mm):</label>
-            <input id="frm-dim-y" name="dimY" type="number" min="10" max="500" value="50">
+            <label for="frm-dim">Marker dimension (mm):</label>
+            <input id="frm-dim" name="dim" type="number" min="10" max="500" value="50">
         </div>
         <div class="field">
             <label for="frm-z1">Base height (z1) (mm):</label>
@@ -81,6 +77,10 @@
             <label for="frm-hole-depth">Mounting hole depth (mm):</label>
             <input id="frm-hole-depth" name="holeDepth" type="number" min="0" max="50" step="0.1" value="0">
             <!-- Adjusted max -->
+        </div>
+        <div class="field">
+            <label for="frm-text-height">Text height (mm):</label>
+            <input id="frm-text-height" name="textHeight" type="number" value="3" min="2" max="20" step="0.5">
         </div>
     </form>
 

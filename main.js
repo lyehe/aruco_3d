@@ -171,7 +171,7 @@ function getArucoBitPattern(dictName, id, patternWidth, patternHeight) {
     return fullPattern;
 }
 
-function generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_baseThickness, z2_featureThickness, extrusionType) {
+function generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_baseThickness, z2_featureThickness, extrusionType, textHeight = 3) {
     if (markerObjectGroup) {
         scene.remove(markerObjectGroup);
         markerObjectGroup.traverse(child => {
@@ -209,7 +209,8 @@ function generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_baseThickne
     const engravingDepth = 0.8;
     const actualEngravingDepth = Math.min(engravingDepth, Math.max(0, baseHeightActual - 1e-4));
 
-    const engraveCharHeight = Math.min(dimY * 0.15, 6);
+    // Use simple text height in mm
+    const engraveCharHeight = Math.max(textHeight, 2); // Minimum 2mm height
     const engraveCharPixelSize = engraveCharHeight / 7;
     const engraveCharWidth = engraveCharPixelSize * 5;
     const charSpacing = engraveCharPixelSize * 1.5;
@@ -231,20 +232,15 @@ function generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_baseThickne
             for (let r_font = 0; r_font < 7; r_font++) {
                 for (let c_font = 0; c_font < 5; c_font++) {
                     if (digitPattern[r_font][c_font] === 1) {
-                        // Calculate font pixel centers in NORMAL L-R, T-B orientation relative to marker's coordinate system
                         const fontPixelCenterX_normal = currentX_engraveCharOrigin + (c_font * engraveCharPixelSize) + (engraveCharPixelSize / 2);
                         const fontPixelCenterY_normal = textBlockStartY - (r_font * engraveCharPixelSize) - (engraveCharPixelSize / 2);
 
-                        // Convert to grid coordinates
-                        // For X (columns): calculate natural grid column, then mirror it across the grid's vertical centerline
                         const gridC_natural = Math.floor((fontPixelCenterX_normal + dimX / 2) / engravePixelActualWidth);
-                        const gridC = engraveGridCols - 1 - gridC_natural; // <--- THIS IS THE CHANGE TO MIRROR HORIZONTALLY
-
-                        // For Y (rows): calculate natural grid row (no change here for horizontal mirroring)
+                        const gridC = engraveGridCols - 1 - gridC_natural;
                         const gridR = Math.floor((-fontPixelCenterY_normal + dimY / 2) / engravePixelActualHeight);
 
                         if (gridR >= 0 && gridR < engraveGridRows && gridC >= 0 && gridC < engraveGridCols) {
-                            baseEngravingGrid[gridR][gridC] = 0; // Mark this pixel for engraving
+                            baseEngravingGrid[gridR][gridC] = 0;
                         }
                     }
                 }
@@ -264,16 +260,15 @@ function generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_baseThickne
                 const pixelCenterY = -((r_eng * engravePixelActualHeight + engravePixelActualHeight / 2) - (dimY / 2));
 
                 let currentPixelThickness, pixelZOffset;
-                if (baseEngravingGrid[r_eng][c_eng] === 1) { // Solid part
+                if (baseEngravingGrid[r_eng][c_eng] === 1) {
                     currentPixelThickness = baseHeightActual;
-                    pixelZOffset = currentPixelThickness / 2; // Centered, bottom at z=0
-                } else { // Engraved part (recess from z=0)
-                    currentPixelThickness = Math.max(1e-5, baseHeightActual - actualEngravingDepth); // Thickness of material above recess
-                    pixelZOffset = actualEngravingDepth + currentPixelThickness / 2; // Position this material above the recess
+                    pixelZOffset = currentPixelThickness / 2;
+                } else {
+                    currentPixelThickness = Math.max(1e-5, baseHeightActual - actualEngravingDepth);
+                    pixelZOffset = actualEngravingDepth + currentPixelThickness / 2;
                 }
 
-                if (currentPixelThickness < 1e-4 && baseEngravingGrid[r_eng][c_eng] === 0) continue; // Skip if engraved pixel is too thin (effectively a hole)
-
+                if (currentPixelThickness < 1e-4 && baseEngravingGrid[r_eng][c_eng] === 0) continue;
 
                 const pixelGeo = new THREE.BoxGeometry(engravePixelActualWidth, engravePixelActualHeight, currentPixelThickness);
                 pixelGeo.translate(pixelCenterX, pixelCenterY, pixelZOffset);
@@ -295,7 +290,7 @@ function generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_baseThickne
         if (flatPlateFeatMatGeos.length > 0) {
             markerObjectGroup.add(new THREE.Mesh(THREE.BufferGeometryUtils.mergeBufferGeometries(flatPlateFeatMatGeos), featureMaterial));
         }
-    } else { // "positive" or "negative" extrusion
+    } else {
         const basePlatePixelGeos = [];
         for (let r_eng = 0; r_eng < engraveGridRows; r_eng++) {
             for (let c_eng = 0; c_eng < engraveGridCols; c_eng++) {
@@ -303,12 +298,12 @@ function generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_baseThickne
                 const pixelCenterY = -((r_eng * engravePixelActualHeight + engravePixelActualHeight / 2) - (dimY / 2));
 
                 let currentPixelThickness, pixelZOffset;
-                if (baseEngravingGrid[r_eng][c_eng] === 1) { // Solid part
+                if (baseEngravingGrid[r_eng][c_eng] === 1) {
                     currentPixelThickness = baseHeightActual;
-                    pixelZOffset = currentPixelThickness / 2; // Centered, bottom at z=0
-                } else { // Engraved part (recess from z=0)
-                    currentPixelThickness = Math.max(1e-5, baseHeightActual - actualEngravingDepth); // Thickness of material above recess
-                    pixelZOffset = actualEngravingDepth + currentPixelThickness / 2; // Position this material above the recess
+                    pixelZOffset = currentPixelThickness / 2;
+                } else {
+                    currentPixelThickness = Math.max(1e-5, baseHeightActual - actualEngravingDepth);
+                    pixelZOffset = actualEngravingDepth + currentPixelThickness / 2;
                 }
 
                 if (currentPixelThickness < 1e-4 && baseEngravingGrid[r_eng][c_eng] === 0) continue;
@@ -331,7 +326,7 @@ function generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_baseThickne
                         featureGeo.translate(
                             (c_aruco * cellWidth + cellWidth / 2) - (dimX / 2),
                             -((r_aruco * cellHeight + cellHeight / 2) - (dimY / 2)),
-                            baseHeightActual + (featureHeightActual / 2) // Features on top of the original base height
+                            baseHeightActual + (featureHeightActual / 2)
                         );
                         featureCellGeometries.push(featureGeo);
                     }
@@ -350,8 +345,8 @@ function generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_baseThickne
 function initControls() {
     const dictSelect = document.querySelector('.setup select[name=dict]');
     const markerIdInput = document.querySelector('.setup input[name=id]');
-    const dimXInput = document.querySelector('.setup input[name=dimX]');
-    const dimYInput = document.querySelector('.setup input[name=dimY]');
+    const dimInput = document.querySelector('.setup input[name=dim]');
+    const textHeightInput = document.querySelector('.setup input[name=textHeight]'); // Simple text height input
     const z1Input = document.querySelector('.setup input[name=z1]');
     const z2Input = document.querySelector('.setup input[name=z2]');
     const saveButton = document.querySelector('.save-button');
@@ -359,8 +354,8 @@ function initControls() {
     function updateMarker() {
         let markerIdNum = Number(markerIdInput.value);
         const markerIdStr = markerIdInput.value;
-        const dimX = Number(dimXInput.value);
-        const dimY = Number(dimYInput.value);
+        const dim = Number(dimInput.value);
+        const textHeight = textHeightInput ? Number(textHeightInput.value) : 3;
         const z1_base = Number(z1Input.value);
         const z2_feature = Number(z2Input.value);
         const extrusionType = document.querySelector('input[name="extrusion"]:checked').value;
@@ -370,53 +365,61 @@ function initControls() {
         const patternWidth = Number(option.getAttribute('data-width'));
         const patternHeight = Number(option.getAttribute('data-height'));
 
-        let maxId = 0;
-        if (dict && dict[dictName]) {
-            maxId = dict[dictName].length - 1;
-        } else if (option.getAttribute('data-number')) {
-            maxId = Number(option.getAttribute('data-number')) - 1;
-        } else { maxId = (dictName.includes("4x4")) ? 999 : (dictName.includes("5x5")) ? 999 : (dictName.includes("6x6_1000")) ? 999 : (dictName.includes("7x7")) ? 999 : (dictName === "mip_36h12") ? 249 : (dictName === "april_16h5") ? 29 : (dictName === "april_25h9") ? 34 : (dictName === "april_36h10") ? 2319 : (dictName === "april_36h11") ? 586 : (dictName === "aruco") ? 1023 : 999; }
-        markerIdInput.setAttribute('max', maxId);
-        if (markerIdNum > maxId) { markerIdInput.value = maxId; markerIdNum = maxId; }
-        if (markerIdNum < 0) { markerIdInput.value = 0; markerIdNum = 0; }
-
-        if (dimX <= 0 || dimY <= 0 || z1_base <= 1e-5 || (extrusionType !== "flat" && z2_feature < 1e-5)) {
+        if (dim <= 0 || z1_base <= 1e-5 || (extrusionType !== "flat" && z2_feature < 1e-5)) {
             if (markerObjectGroup) scene.remove(markerObjectGroup);
             saveButton.removeAttribute('href'); saveButton.removeAttribute('download');
             document.querySelector('.marker-id').innerHTML = 'Dimensions must be positive & > 0.00001mm.'; return;
         }
 
-        const z2_actual = (extrusionType === "flat") ? 1e-5 : z2_feature; // Use minimal for flat, actual for others
+        const z2_actual = (extrusionType === "flat") ? 1e-5 : z2_feature;
 
         loadDict.then(() => {
+            // Keep only this maxId calculation inside the promise
+            let maxId = 0;
             if (dict && dict[dictName]) {
-                maxId = dict[dictName].length - 1; markerIdInput.setAttribute('max', maxId);
-                if (markerIdNum > maxId) { markerIdInput.value = maxId; markerIdNum = maxId; }
-            } else {
+                maxId = dict[dictName].length - 1;
+            } else if (option.getAttribute('data-number')) {
+                maxId = Number(option.getAttribute('data-number')) - 1;
+            } else { 
+                maxId = (dictName.includes("4x4")) ? 999 : 
+                       (dictName.includes("5x5")) ? 999 : 
+                       (dictName.includes("6x6_1000")) ? 999 : 
+                       (dictName.includes("7x7")) ? 999 : 
+                       (dictName === "mip_36h12") ? 249 : 
+                       (dictName === "april_16h5") ? 29 : 
+                       (dictName === "april_25h9") ? 34 : 
+                       (dictName === "april_36h10") ? 2319 : 
+                       (dictName === "april_36h11") ? 586 : 
+                       (dictName === "aruco") ? 1023 : 999; 
+            }
+            markerIdInput.setAttribute('max', maxId);
+            if (markerIdNum > maxId) { markerIdInput.value = maxId; markerIdNum = maxId; }
+            if (markerIdNum < 0) { markerIdInput.value = 0; markerIdNum = 0; }
+
+            if (!dict[dictName]) {
                 document.querySelector('.marker-id').innerHTML = `Dict '${dictName}' not found.`;
                 if (markerObjectGroup) scene.remove(markerObjectGroup);
-                saveButton.removeAttribute('href'); saveButton.removeAttribute('download'); return;
+                saveButton.removeAttribute('href'); saveButton.removeAttribute('download'); 
+                return;
             }
             if (!dict[dictName][markerIdNum]) {
                 if (markerObjectGroup) scene.remove(markerObjectGroup);
                 saveButton.removeAttribute('href'); saveButton.removeAttribute('download');
-                document.querySelector('.marker-id').innerHTML = `ID ${markerIdNum} not found in ${dictName}`; return;
+                document.querySelector('.marker-id').innerHTML = `ID ${markerIdNum} not found in ${dictName}`; 
+                return;
             }
 
             const fullPattern = getArucoBitPattern(dictName, markerIdNum, patternWidth, patternHeight);
-            // Pass z1_base (base thickness from UI) and z2_actual (feature thickness from UI or 1e-5 for flat)
-            const currentMarkerMeshGroup = generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_base, z2_actual, extrusionType);
+            const currentMarkerMeshGroup = generateMarkerMesh(markerIdStr, fullPattern, dim, dim, z1_base, z2_actual, extrusionType, textHeight);
 
             const exporter = new THREE.STLExporter();
             const stlString = exporter.parse(currentMarkerMeshGroup, { binary: false });
 
             saveButton.href = 'data:model/stl;base64,' + btoa(stlString);
 
-            // Total Z height for filename: base + features (features are ~0 for flat)
-            // Engraving happens within z1_base, so it doesn't change the outer dimension.
             const fileNameTotalZ = (extrusionType === "flat") ? z1_base : z1_base + z2_actual;
 
-            saveButton.download = `${dictName}-${markerIdNum}_${dimX}x${dimY}x${fileNameTotalZ.toFixed(2)}mm_${extrusionType}_engravedID.stl`;
+            saveButton.download = `${dictName}-${markerIdNum}_${dim}x${dim}x${fileNameTotalZ.toFixed(2)}mm_${extrusionType}_engravedID.stl`;
             document.querySelector('.marker-id').innerHTML = `ID ${markerIdNum} (${dictName}) - ${extrusionType} (ID engraved)`;
         }).catch(err => {
             console.error("Error loading/processing dictionary:", err);
@@ -428,8 +431,8 @@ function initControls() {
 
     dictSelect.addEventListener('change', updateMarker);
     markerIdInput.addEventListener('input', updateMarker);
-    dimXInput.addEventListener('input', updateMarker);
-    dimYInput.addEventListener('input', updateMarker);
+    dimInput.addEventListener('input', updateMarker);
+    if (textHeightInput) textHeightInput.addEventListener('input', updateMarker);
     z1Input.addEventListener('input', updateMarker);
     z2Input.addEventListener('input', updateMarker);
     document.querySelectorAll('input[name="extrusion"]').forEach(radio => {
@@ -511,8 +514,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (hasIndices) mergedGeometry.setIndex(new THREE.BufferAttribute(mergedIndices, 1));
 
                 if (!mergedNormals && !hasIndices) mergedGeometry.computeVertexNormals();
-                else if (!mergedNormals && hasIndices) mergedGeometry.computeVertexNormals();
-
 
                 return mergedGeometry;
             }
