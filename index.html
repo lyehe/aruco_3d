@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="main.css" />
+    <meta name="description" content="Generate 3D ArUco marker STL files for printing">
+    <meta name="keywords"
+        content="ArUco, AprilTag, OpenCV, april, tag, marker, dictionary, family, print, stl, 3d printing, computer vision, robotics">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <title>Online 3D ArUco Marker STL Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/exporters/STLExporter.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/utils/BufferGeometryUtils.js"></script>
+</head>
+
+<body>
+    <h1>3D ArUco Marker STL Generator</h1>
+    <form class="setup">
+        <div class="field">
+            <label for="frm-dict">Dictionary:</label>
+            <select name="dict" id="frm-dict">
+                <optgroup label="Standard dictionaries">
+                    <option value="aruco" data-width="5" data-height="5" data-number="1024">Original ArUco</option>
+                    <option selected value="4x4_1000" data-width="4" data-height="4">4x4 (50, 100, 250, 1000)</option>
+                    <option value="5x5_1000" data-width="5" data-height="5">5x5 (50, 100, 250, 1000)</option>
+                    <option value="6x6_1000" data-width="6" data-height="6">6x6 (50, 100, 250, 1000)</option>
+                    <option value="7x7_1000" data-width="7" data-height="7">7x7 (50, 100, 250, 1000)</option>
+                    <option value="mip_36h12" data-width="6" data-height="6" data-number="250">MIP_36h12 (250)</option>
+                </optgroup>
+                <optgroup label="AprilTag">
+                    <option value="april_16h5" data-width="4" data-height="4" data-number="30">AprilTag 16h5 (30)
+                    </option>
+                    <option value="april_25h9" data-width="5" data-height="5" data-number="35">AprilTag 25h9 (35)
+                    </option>
+                    <option value="april_36h10" data-width="6" data-height="6" data-number="2320">AprilTag 36h10 (2320)
+                    </option>
+                    <option value="april_36h11" data-width="6" data-height="6" data-number="587">AprilTag 36h11 (587)
+                    </option>
+                </optgroup>
+            </select>
+        </div>
+        <div class="field">
+            <label for="frm-id">Marker ID:</label>
+            <input id="frm-id" name="id" type="number" min="0" max="999" value="0">
+        </div>
+        <div class="field">
+            <label for="frm-dim-x">Marker X dim (mm):</label>
+            <input id="frm-dim-x" name="dimX" type="number" min="10" max="500" value="50">
+        </div>
+        <div class="field">
+            <label for="frm-dim-y">Marker Y dim (mm):</label>
+            <input id="frm-dim-y" name="dimY" type="number" min="10" max="500" value="50">
+        </div>
+        <div class="field">
+            <label for="frm-z1">Base height (z1) (mm):</label>
+            <input id="frm-z1" name="z1" type="number" min="0.1" max="50" step="0.1" value="2">
+        </div>
+        <div class="field">
+            <label for="frm-z2">Feature height (z2) (mm):</label>
+            <input id="frm-z2" name="z2" type="number" min="0.1" max="50" step="0.1" value="1">
+        </div>
+        <div class="field">
+            <label>Extrusion Type:</label>
+            <div class="radio-group">
+                <input type="radio" id="frm-positive" name="extrusion" value="positive" checked>
+                <label for="frm-positive" class="radio-label">Positive</label>
+                <input type="radio" id="frm-negative" name="extrusion" value="negative">
+                <label for="frm-negative" class="radio-label">Negative</label>
+                <input type="radio" id="frm-flat" name="extrusion" value="flat">
+                <label for="frm-flat" class="radio-label">Flat</label>
+            </div>
+        </div>
+        <div class="field">
+            <label for="frm-hole-d">Mounting hole diameter (mm):</label>
+            <input id="frm-hole-d" name="holeD" type="number" min="0" max="20" step="0.1" value="0">
+        </div>
+        <div class="field">
+            <label for="frm-hole-depth">Mounting hole depth (mm):</label>
+            <input id="frm-hole-depth" name="holeDepth" type="number" min="0" max="10" step="0.1" value="0">
+        </div>
+    </form>
+
+    <div class="marker-id"></div>
+    <div id="stl-preview-container">
+        <div id="stl-preview"></div>
+    </div>
+
+    <div class="tools">
+        <a href="" class="save-button">Save STL</a>
+        or <a href="javascript:window.print()">print page view</a>.
+    </div>
+    <footer>
+        <div>
+            If you like this project, please <a href="https://github.com/okalachev/arucogen">
+                <nobr>★ original on GitHub</nobr>
+            </a>!
+        </div>
+        <div>
+            See <a href="https://docs.opencv.org/3.2.0/d5/dae/tutorial_aruco_detection.html">OpenCV documentation</a>
+            to learn about ArUco markers.<br>
+            Original Author: <a href="http://chev.me">Oleg Kalachev</a>. (Adapted for STL)
+        </div>
+    </footer>
+    <script type="text/javascript" src="main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,65 @@
+
+/* ... (existing styles) ... */
+
+.setup {
+	margin: 20px auto;
+	/* width: 440px; Adjust as needed for new fields */
+    width: 500px; 
+}
+
+.setup label {
+	/* width: 150px; Adjust as needed */
+    width: 180px; 
+}
+
+.setup .radio-group {
+    display: inline-block;
+    margin-left: 20px;
+}
+
+.setup .radio-label {
+    width: auto;
+    margin-left: 5px;
+    margin-right: 15px;
+    color: black; /* Make radio labels normally visible */
+    font-size: 15px;
+}
+
+
+#stl-preview-container {
+    text-align: center;
+    margin: 20px;
+}
+
+#stl-preview {
+    display: inline-block; /* Allows centering */
+	width: 400px; /* Adjust as needed */
+	height: 400px; /* Adjust as needed */
+	border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    position: relative; /* For potential overlays or loaders */
+}
+
+.marker { /* Hide old SVG marker or repurpose */
+	display: none; 
+}
+
+/* ... (existing print styles, might need adjustment if you want to print the preview) ... */
+@media print {
+	body > * {
+		display: none; /* Hides everything by default for printing */
+	}
+    h1, .setup, .tools, footer {
+        display: none !important; /* Ensure these are hidden */
+    }
+	#stl-preview-container, .marker-id { /* Only show these for print */
+		display: block !important;
+        border: none !important;
+	}
+    #stl-preview {
+        width: 100% !important; /* Full width for print */
+        height: auto !important; /* Adjust height automatically */
+        border: none !important;
+        /* Note: 3D canvas printing is tricky. This might just print a static view or blank. */
+    }
+}
