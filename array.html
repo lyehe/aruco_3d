@@ -3,11 +3,11 @@
 
 <head>
     <link rel="stylesheet" href="main.css" />
-    <meta name="description" content="Generate 3D ArUco marker STL files for printing">
+    <meta name="description" content="Generate an array of 3D ArUco marker STL files for printing">
     <meta name="keywords"
-        content="ArUco, AprilTag, OpenCV, april, tag, marker, dictionary, family, print, stl, 3d printing, computer vision, robotics">
+        content="ArUco, AprilTag, OpenCV, april, tag, marker, array, grid, dictionary, family, print, stl, 3d printing, computer vision, robotics">
     <link rel="icon" type="image/png" href="favicon.png">
-    <title>Online 3D ArUco Marker STL Generator</title>
+    <title>Online 3D ArUco Marker Array STL Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/exporters/STLExporter.js"></script>
@@ -17,7 +17,7 @@
 </head>
 
 <body>
-    <h1>3D ArUco Marker STL Generator</h1>
+    <h1>3D ArUco Marker Array STL Generator</h1>
     <form class="setup">
         <div class="field">
             <label for="frm-dict">Dictionary:</label>
@@ -43,8 +43,39 @@
             </select>
         </div>
         <div class="field">
-            <label for="frm-id">Marker ID:</label>
-            <input id="frm-id" name="id" type="number" min="0" max="999" value="0">
+            <label for="frm-grid-x">Grid X:</label>
+            <input id="frm-grid-x" name="gridX" type="number" min="1" max="20" value="3">
+        </div>
+        <div class="field">
+            <label for="frm-grid-y">Grid Y:</label>
+            <input id="frm-grid-y" name="gridY" type="number" min="1" max="20" value="3">
+        </div>
+        <div class="field">
+            <label for="frm-gap">Gap Width (mm):</label>
+            <input id="frm-gap" name="gap" type="number" min="0" step="0.1" value="5">
+        </div>
+        <div class="field">
+            <label>Gap Fill Type:</label>
+            <div class="radio-group">
+                <input type="radio" id="frm-gap-empty" name="gapFill" value="empty" checked>
+                <label for="frm-gap-empty" class="radio-label">Empty</label>
+                <input type="radio" id="frm-gap-black" name="gapFill" value="black">
+                <label for="frm-gap-black" class="radio-label">Fill Black</label>
+                <input type="radio" id="frm-gap-white" name="gapFill" value="white">
+                <label for="frm-gap-white" class="radio-label">Fill White</label>
+            </div>
+        </div>
+         <div class="field">
+            <label for="frm-start-id">Start ID for Refill:</label>
+            <input id="frm-start-id" name="startId" type="number" min="0" value="0">
+        </div>
+        <div class="field">
+            <label for="frm-ids">Marker IDs (comma-separated):</label>
+            <textarea id="frm-ids" name="ids" rows="3">0,1,2,3,4,5,6,7,8</textarea>
+        </div>
+        <div class="field">
+            <button type="button" id="btn-refill-ids">Refill IDs</button>
+            <button type="button" id="btn-randomize-ids">Randomize IDs</button>
         </div>
         <div class="field">
             <label for="frm-dim">Marker dimension (mm):</label>
@@ -71,27 +102,27 @@
         </div>
     </form>
 
-    <div class="marker-id"></div>
+    <div class="marker-id"></div> <!-- This will display array info -->
     <div id="stl-preview-container">
         <div id="stl-preview"></div>
     </div>
 
     <div class="tools">
-        <button type="button" id="save-stl-button" class="save-button">Save STL</button>
-        <button type="button" id="save-glb-button" class="save-button">Save GLB</button>
+        <button type="button" id="save-stl-array-button" class="save-button">Save STL Array</button>
+        <button type="button" id="save-glb-array-button" class="save-button">Save GLB Array</button>
         or <a href="javascript:window.print()">print page view</a>.
     </div>
     <footer>
         <div>
             If you like this project, please <a href="https://github.com/okalachev/arucogen">
                 <nobr>★ original on GitHub</nobr>
-            </a>!
+            </a>! (Array version based on original)
         </div>
         <div>
-            Original Author: <a href="http://chev.me">Oleg Kalachev</a>. (Adapted for STL)
+            Original Author: <a href="http://chev.me">Oleg Kalachev</a>. (Adapted for STL and Array)
         </div>
     </footer>
-    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/array_app.js"></script>
 </body>
 
-</html>
+</html> 
