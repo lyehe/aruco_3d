@@ -44,14 +44,16 @@ export function initControls(loadDictPromise) {
     const dimInput = document.querySelector('.setup input[name=dim]');
     const z1Input = document.querySelector('.setup input[name=z1]');
     const z2Input = document.querySelector('.setup input[name=z2]');
-    const saveStlArrayButton = document.getElementById('save-stl-array-button');
+    const saveWhiteStlArrayButton = document.getElementById('save-white-stl-array-button');
+    const saveBlackStlArrayButton = document.getElementById('save-black-stl-array-button');
     const saveGlbArrayButton = document.getElementById('save-glb-array-button');
 
     function updateMarkerArray() {
+        const allActiveButtons = [saveWhiteStlArrayButton, saveBlackStlArrayButton, saveGlbArrayButton];
+
         if (!dict) {
             console.warn("Dictionary not loaded yet for updateMarkerArray");
-            if (saveStlArrayButton) saveStlArrayButton.disabled = true;
-            if (saveGlbArrayButton) saveGlbArrayButton.disabled = true;
+            allActiveButtons.forEach(btn => { if(btn) btn.disabled = true; });
             return;
         }
 
@@ -77,6 +79,7 @@ export function initControls(loadDictPromise) {
         const z2_feature = Number(z2Input.value);
         const extrusionType = document.querySelector('input[name="extrusion"]:checked').value;
         const gapFillType = document.querySelector('input[name="gapFill"]:checked').value;
+        const cornerFillType = document.querySelector('input[name="cornerFill"]:checked').value;
 
         const option = dictSelect.options[dictSelect.selectedIndex];
         const dictName = option.value;
@@ -88,21 +91,13 @@ export function initControls(loadDictPromise) {
         const errorDisplay = document.querySelector('.marker-id');
 
         if (dim <= 0 || z1_base < 0 || (extrusionType !== "flat" && z2_feature < 1e-5) || (extrusionType === "flat" && z1_base < 0)) {
-            while (markerArrayObjectGroup.children.length > 0) {
-                const child = markerArrayObjectGroup.children[0];
-                markerArrayObjectGroup.remove(child);
-                if (child.geometry) child.geometry.dispose();
-                if (child.isGroup) { child.traverse(subChild => { if (subChild.isMesh && subChild.geometry) subChild.geometry.dispose(); });}
-            }
-            if (saveStlArrayButton) saveStlArrayButton.disabled = true;
-            if (saveGlbArrayButton) saveGlbArrayButton.disabled = true;
+            allActiveButtons.forEach(btn => { if(btn) btn.disabled = true; });
             errorDisplay.innerHTML = 'Dimensions must be positive. Base height (z1) can be 0 for flat markers.';
             return;
         }
 
         if (gap < 0 || gap > 2 * dim) {
-            if (saveStlArrayButton) saveStlArrayButton.disabled = true;
-            if (saveGlbArrayButton) saveGlbArrayButton.disabled = true;
+            allActiveButtons.forEach(btn => { if(btn) btn.disabled = true; });
             errorDisplay.innerHTML = 'Gap width must be between 0 and 2x marker dimension.';
             return;
         }
@@ -111,8 +106,7 @@ export function initControls(loadDictPromise) {
 
         const numRequiredIds = gridX * gridY;
         if (markerIdsRaw.length !== numRequiredIds) {
-            if (saveStlArrayButton) saveStlArrayButton.disabled = true;
-            if (saveGlbArrayButton) saveGlbArrayButton.disabled = true;
+            allActiveButtons.forEach(btn => { if(btn) btn.disabled = true; });
             errorDisplay.innerHTML = `Error: Number of IDs (${markerIdsRaw.length}) does not match grid size (${gridX}x${gridY}=${numRequiredIds}).`;
             return;
         }
@@ -120,27 +114,50 @@ export function initControls(loadDictPromise) {
         const markerIds = markerIdsRaw.map(Number);
         let invalidIdFound = false;
         for (const id of markerIds) {
-            if (isNaN(id) || id < 0 || id > maxId || !dict[dictName] || !dict[dictName][id]) {
-                if (saveStlArrayButton) saveStlArrayButton.disabled = true;
-                if (saveGlbArrayButton) saveGlbArrayButton.disabled = true;
-                errorDisplay.innerHTML = `Error: Invalid or out-of-range ID found (ID: ${id}, Max: ${maxId} for ${dictName}).`;
+            if (isNaN(id)) {
+                errorDisplay.innerHTML = `Error: Non-numeric ID found.`;
+                invalidIdFound = true;
+                break;
+            }
+            if (id === -1 || id === -2) {
+                // Special IDs are valid, skip dictionary check for them
+                continue;
+            }
+            // For ArUco IDs (>=0), check against dictionary and maxId
+            if (id < 0 || id > maxId || !dict[dictName] || !dict[dictName][id]) {
+                allActiveButtons.forEach(btn => { if(btn) btn.disabled = true; });
+                errorDisplay.innerHTML = `Error: Invalid or out-of-range ArUco ID found (ID: ${id}, Max: ${maxId} for ${dictName}). Special IDs -1 (white) & -2 (black) are allowed.`;
                 invalidIdFound = true;
                 break;
             }
         }
-        if (invalidIdFound) return;
+        if (invalidIdFound) {
+            allActiveButtons.forEach(btn => { if(btn) btn.disabled = true; });
+            return;
+        }
 
         errorDisplay.innerHTML = ''; // Clear previous errors
-        if (saveStlArrayButton) saveStlArrayButton.disabled = false;
-        if (saveGlbArrayButton) saveGlbArrayButton.disabled = false;
+        allActiveButtons.forEach(btn => { if(btn) btn.disabled = false; });
 
         for (let y_grid = 0; y_grid < gridY; y_grid++) {
             for (let x_grid = 0; x_grid < gridX; x_grid++) {
                 const markerIndex = y_grid * gridX + x_grid;
                 const markerIdNum = markerIds[markerIndex];
+                let singleMarkerInstanceGroup;
+                let fullPattern = null;
+                let specialMarkerTypeStr = null;
 
-                const fullPattern = getArucoBitPattern(dictName, markerIdNum, patternWidth, patternHeight);
-                const singleMarkerInstanceGroup = generateMarkerMesh(fullPattern, dim, dim, z1_base, z2_actual, extrusionType);
+                if (markerIdNum === -1) {
+                    specialMarkerTypeStr = 'pureWhite';
+                } else if (markerIdNum === -2) {
+                    specialMarkerTypeStr = 'pureBlack';
+                } else {
+                    // Regular ArUco ID
+                    fullPattern = getArucoBitPattern(dictName, markerIdNum, patternWidth, patternHeight);
+                }
+                
+                // z2_actual is already defined based on extrusion type for the whole array
+                singleMarkerInstanceGroup = generateMarkerMesh(fullPattern, dim, dim, z1_base, z2_actual, extrusionType, specialMarkerTypeStr);
                 
                 singleMarkerInstanceGroup.position.set(
                     x_grid * (dim + gap) - (gridX - 1) * (dim + gap) / 2,
@@ -152,101 +169,256 @@ export function initControls(loadDictPromise) {
         }
 
         // --- Gap Filler Logic START ---
-        // 1. Clear any *previously created MERGED gap_filler mesh* by its name
-        const existingFiller = markerArrayObjectGroup.getObjectByName('gap_filler');
-        if (existingFiller) {
-            markerArrayObjectGroup.remove(existingFiller);
-            if (existingFiller.geometry) existingFiller.geometry.dispose();
-        }
+        // 1. Clear any previously created filler/corner meshes by name.
+        const childrenToRemove = markerArrayObjectGroup.children.filter(child => 
+            child.name === 'gap_filler_base' || // Changed from gap_filler
+            child.name.startsWith('intersection_fill_') || // Will be removed if we simplify to base + optional elevated
+            child.name.startsWith('outer_corner_') ||     // Will be removed
+            child.name.startsWith('edge_top_corner_') ||    // Will be removed
+            child.name.startsWith('edge_bottom_corner_') || // Will be removed
+            child.name.startsWith('edge_left_corner_') ||  // Will be removed
+            child.name.startsWith('edge_right_corner_') || // Will be removed
+            child.name.startsWith('elevated_') || // For new elevated corners
+            child.name.startsWith('flat_opposite_') // For new flat opposite corners
+        );
+        childrenToRemove.forEach(child => {
+            markerArrayObjectGroup.remove(child);
+            if (child.isMesh && child.geometry) child.geometry.dispose();
+        });
 
-        // 2. If a fill type is selected (black or white), create and add new fillers
         if (gapFillType === 'black' || gapFillType === 'white') {
             const fillerMaterial = (gapFillType === 'black') ? blackMaterial : whiteMaterial;
-            let fillerThickness = z1_base; 
-            if (extrusionType === 'flat') {
-                 fillerThickness = Math.max(z1_base, 0.1); 
-            } else {
-                 fillerThickness = Math.max(z1_base, 0.1); 
+            let cornerPieceMaterial = fillerMaterial;
+            if (cornerFillType === 'opposite') {
+                cornerPieceMaterial = (fillerMaterial === blackMaterial) ? whiteMaterial : blackMaterial;
             }
-            if (fillerThickness < 1e-5) fillerThickness = 0.1; 
 
-            const fillerZOffset = fillerThickness / 2; 
-            const fillerGeometries = [];
+            const baseFillThickness = Math.max(z1_base, 0.1);
+            // Ensure flat extrusion has min thickness if z1_base is 0
+            // This is now implicitly handled by Math.max(z1_base, 0.1) as z1_base >= 0 constraint exists
+            const baseFillZOffset = baseFillThickness / 2;
+            
+            // Use z2_feature for elevated corner height, ensuring a minimum if it's positive, or 0 if z2_feature is 0
+            let actualFeatureHeightForCorners = 0;
+            if (z2_feature >= 1e-5) { // Only consider if z2_feature is meant to be there
+                actualFeatureHeightForCorners = Math.max(z2_feature, 0.1);
+            }
+            const elevatedCornerZOffset = baseFillThickness + actualFeatureHeightForCorners / 2;
 
-            // Horizontal gap segments
+            const baseFillerGeometries = [];
+            const markersAreaWidth = gridX * dim + Math.max(0, gridX - 1) * gap;
+            const markersAreaHeight = gridY * dim + Math.max(0, gridY - 1) * gap;
+            const borderWidth = gap;
+
+            // --- Step 1: Define geometries for the continuous base layer ---
+            // For flat mode with different corner material, corner areas are NOT added to baseFillerGeometries.
+
+            // 1A. Horizontal straight gap segments (always part of base if fill is active)
             if (gridY > 1 && gap > 1e-5) {
                 for (let r_gap = 0; r_gap < gridY - 1; r_gap++) {
                     for (let c_marker = 0; c_marker < gridX; c_marker++) {
-                        const hGapGeo = new THREE.BoxGeometry(dim, gap, fillerThickness);
-                        const segmentX = c_marker * (dim + gap) - (gridX - 1) * (dim + gap) / 2;
-                        const segmentY = (gridY - 1 - (r_gap + 1)) * (dim + gap) - (gridY - 1) * (dim + gap) / 2 + (dim / 2) + (gap / 2);
-                        hGapGeo.translate(segmentX, segmentY, fillerZOffset);
-                        fillerGeometries.push(hGapGeo);
+                        const hGapGeo = new THREE.BoxGeometry(dim, gap, baseFillThickness);
+                        hGapGeo.translate(c_marker * (dim + gap) - (gridX - 1) * (dim + gap) / 2, 
+                                          (gridY - 1 - (r_gap + 1)) * (dim + gap) - (gridY - 1) * (dim + gap) / 2 + (dim / 2) + (gap / 2), 
+                                          baseFillZOffset);
+                        baseFillerGeometries.push(hGapGeo);
                     }
                 }
             }
 
-            // Vertical gap segments
+            // 1B. Vertical straight gap segments (always part of base if fill is active)
             if (gridX > 1 && gap > 1e-5) {
                 for (let c_gap = 0; c_gap < gridX - 1; c_gap++) {
                     for (let r_marker = 0; r_marker < gridY; r_marker++) {
-                        const vGapGeo = new THREE.BoxGeometry(gap, dim, fillerThickness);
-                        const segmentX = c_gap * (dim + gap) - (gridX - 1) * (dim + gap) / 2 + (dim/2) + (gap/2);
-                        const segmentY = (gridY - 1 - r_marker) * (dim + gap) - (gridY - 1) * (dim + gap) / 2;
-                        vGapGeo.translate(segmentX, segmentY, fillerZOffset);
-                        fillerGeometries.push(vGapGeo);
+                        const vGapGeo = new THREE.BoxGeometry(gap, dim, baseFillThickness);
+                        vGapGeo.translate(c_gap * (dim + gap) - (gridX - 1) * (dim + gap) / 2 + (dim/2) + (gap/2), 
+                                          (gridY - 1 - r_marker) * (dim + gap) - (gridY - 1) * (dim + gap) / 2, 
+                                          baseFillZOffset);
+                        baseFillerGeometries.push(vGapGeo);
                     }
                 }
             }
 
-            // Intersection gap segments
+            // 1C. Inter-marker intersections (gap x gap squares)
             if (gridX > 1 && gridY > 1 && gap > 1e-5) {
                 for (let r_intersect = 0; r_intersect < gridY - 1; r_intersect++) {
                     for (let c_intersect = 0; c_intersect < gridX - 1; c_intersect++) {
-                        const iGapGeo = new THREE.BoxGeometry(gap, gap, fillerThickness);
-                        const intersectX = c_intersect * (dim + gap) - (gridX - 1) * (dim + gap) / 2 + (dim/2) + (gap/2);
-                        const intersectY = (gridY - 1 - (r_intersect + 1)) * (dim + gap) - (gridY - 1) * (dim + gap) / 2 + (dim / 2) + (gap / 2);
-                        iGapGeo.translate(intersectX, intersectY, fillerZOffset);
-                        fillerGeometries.push(iGapGeo);
+                        if (cornerPieceMaterial === fillerMaterial || extrusionType !== 'flat') {
+                            const iGapGeo = new THREE.BoxGeometry(gap, gap, baseFillThickness);
+                            iGapGeo.translate(c_intersect * (dim + gap) - (gridX - 1) * (dim + gap) / 2 + (dim/2) + (gap/2), 
+                                              (gridY - 1 - (r_intersect + 1)) * (dim + gap) - (gridY - 1) * (dim + gap) / 2 + (dim / 2) + (gap / 2), 
+                                              baseFillZOffset);
+                            baseFillerGeometries.push(iGapGeo);
+                        }
                     }
                 }
             }
-
-            // --- Add Border Segments START ---
-            const borderWidth = gap; // Border width is same as gap width
-            if (borderWidth > 1e-5) { // Only add border if gap (and thus borderWidth) is significant
-                const markersAreaWidth = gridX * dim + Math.max(0, gridX - 1) * gap;
-                const markersAreaHeight = gridY * dim + Math.max(0, gridY - 1) * gap;
-                const fullFrameHeight = markersAreaHeight + 2 * borderWidth; // Total height including top/bottom border strips
-
-                // Top border
-                const topBorderGeo = new THREE.BoxGeometry(markersAreaWidth + 2 * borderWidth, borderWidth, fillerThickness);
-                topBorderGeo.translate(0, markersAreaHeight / 2 + borderWidth / 2, fillerZOffset);
-                fillerGeometries.push(topBorderGeo);
-
-                // Bottom border
-                const bottomBorderGeo = new THREE.BoxGeometry(markersAreaWidth + 2 * borderWidth, borderWidth, fillerThickness);
-                bottomBorderGeo.translate(0, -markersAreaHeight / 2 - borderWidth / 2, fillerZOffset);
-                fillerGeometries.push(bottomBorderGeo);
-
-                // Left border (height now spans the full outer frame height)
-                const leftBorderGeo = new THREE.BoxGeometry(borderWidth, fullFrameHeight, fillerThickness);
-                leftBorderGeo.translate(-markersAreaWidth / 2 - borderWidth / 2, 0, fillerZOffset);
-                fillerGeometries.push(leftBorderGeo);
-                
-                // Right border (height now spans the full outer frame height)
-                const rightBorderGeo = new THREE.BoxGeometry(borderWidth, fullFrameHeight, fillerThickness); 
-                rightBorderGeo.translate(markersAreaWidth / 2 + borderWidth / 2, 0, fillerZOffset);
-                fillerGeometries.push(rightBorderGeo);
-            }
-            // --- Add Border Segments END ---
             
-            if(fillerGeometries.length > 0){
-                const mergedFillers = THREE.BufferGeometryUtils.mergeBufferGeometries(fillerGeometries);
-                if(mergedFillers){
-                    const fillerMesh = new THREE.Mesh(mergedFillers, fillerMaterial);
-                    fillerMesh.name = 'gap_filler'; // Name for easy removal and identification
-                    markerArrayObjectGroup.add(fillerMesh);
+            // 1D. Outer Border (all parts contributing to the base layer)
+            if (borderWidth > 1e-5) {
+                // Outermost Border Corner pieces (4 of them)
+                const outerCornerBasePositions = [
+                    { x: -markersAreaWidth / 2 - borderWidth / 2, y: markersAreaHeight / 2 + borderWidth / 2 }, 
+                    { x: markersAreaWidth / 2 + borderWidth / 2,  y: markersAreaHeight / 2 + borderWidth / 2 }, 
+                    { x: -markersAreaWidth / 2 - borderWidth / 2, y: -markersAreaHeight / 2 - borderWidth / 2 }, 
+                    { x: markersAreaWidth / 2 + borderWidth / 2,  y: -markersAreaHeight / 2 - borderWidth / 2 }  
+                ];
+                for (const corner of outerCornerBasePositions) {
+                    if (cornerPieceMaterial === fillerMaterial || extrusionType !== 'flat') {
+                        const outerCornerBaseGeo = new THREE.BoxGeometry(borderWidth, borderWidth, baseFillThickness);
+                        outerCornerBaseGeo.translate(corner.x, corner.y, baseFillZOffset);
+                        baseFillerGeometries.push(outerCornerBaseGeo);
+                    }
+                }
+
+                // Edge Intersections (Marker-to-Border corners)
+                if (gridX > 1) { // Top and Bottom edge intersections
+                    for (let c_edge = 0; c_edge < gridX - 1; c_edge++) {
+                        const edgeCornerX = c_edge * (dim + gap) - (gridX - 1) * (dim + gap) / 2 + (dim/2) + (gap/2);
+                        if (cornerPieceMaterial === fillerMaterial || extrusionType !== 'flat') {
+                            const topEdgeBaseGeo = new THREE.BoxGeometry(gap, borderWidth, baseFillThickness);
+                            topEdgeBaseGeo.translate(edgeCornerX, markersAreaHeight / 2 + borderWidth / 2, baseFillZOffset);
+                            baseFillerGeometries.push(topEdgeBaseGeo);
+                            const bottomEdgeBaseGeo = new THREE.BoxGeometry(gap, borderWidth, baseFillThickness);
+                            bottomEdgeBaseGeo.translate(edgeCornerX, -markersAreaHeight / 2 - borderWidth / 2, baseFillZOffset);
+                            baseFillerGeometries.push(bottomEdgeBaseGeo);
+                        }
+                    }
+                }
+                if (gridY > 1) { // Left and Right edge intersections
+                    for (let r_edge = 0; r_edge < gridY - 1; r_edge++) {
+                        const edgeCornerY = (gridY - 1 - (r_edge + 1)) * (dim + gap) - (gridY - 1) * (dim + gap) / 2 + (dim / 2) + (gap / 2);
+                        if (cornerPieceMaterial === fillerMaterial || extrusionType !== 'flat') {
+                            const leftEdgeBaseGeo = new THREE.BoxGeometry(borderWidth, gap, baseFillThickness);
+                            leftEdgeBaseGeo.translate(-markersAreaWidth / 2 - borderWidth / 2, edgeCornerY, baseFillZOffset);
+                            baseFillerGeometries.push(leftEdgeBaseGeo);
+                            const rightEdgeBaseGeo = new THREE.BoxGeometry(borderWidth, gap, baseFillThickness);
+                            rightEdgeBaseGeo.translate(markersAreaWidth / 2 + borderWidth / 2, edgeCornerY, baseFillZOffset);
+                            baseFillerGeometries.push(rightEdgeBaseGeo);
+                        }
+                    }
+                }
+
+                // Straight Border Segments (dim-length pieces, always part of base)
+                for (let c_marker = 0; c_marker < gridX; c_marker++) { // Top & Bottom straight border parts
+                    const sbsGeoTop = new THREE.BoxGeometry(dim, borderWidth, baseFillThickness);
+                    sbsGeoTop.translate(c_marker*(dim+gap) - (gridX-1)*(dim+gap)/2, markersAreaHeight/2 + borderWidth/2, baseFillZOffset);
+                    baseFillerGeometries.push(sbsGeoTop);
+                    const sbsGeoBottom = new THREE.BoxGeometry(dim, borderWidth, baseFillThickness);
+                    sbsGeoBottom.translate(c_marker*(dim+gap) - (gridX-1)*(dim+gap)/2, -markersAreaHeight/2 - borderWidth/2, baseFillZOffset);
+                    baseFillerGeometries.push(sbsGeoBottom);
+                }
+                for (let r_marker = 0; r_marker < gridY; r_marker++) { // Left & Right straight border parts
+                    const sbsGeoLeft = new THREE.BoxGeometry(borderWidth, dim, baseFillThickness);
+                    sbsGeoLeft.translate(-markersAreaWidth/2 - borderWidth/2, (gridY-1-r_marker)*(dim+gap) - (gridY-1)*(dim+gap)/2, baseFillZOffset);
+                    baseFillerGeometries.push(sbsGeoLeft);
+                    const sbsGeoRight = new THREE.BoxGeometry(borderWidth, dim, baseFillThickness);
+                    sbsGeoRight.translate(markersAreaWidth/2 + borderWidth/2, (gridY-1-r_marker)*(dim+gap) - (gridY-1)*(dim+gap)/2, baseFillZOffset);
+                    baseFillerGeometries.push(sbsGeoRight);
+                }
+            }
+            
+            // Merge and add the continuous base layer
+            if (baseFillerGeometries.length > 0) {
+                const mergedBaseFill = THREE.BufferGeometryUtils.mergeBufferGeometries(baseFillerGeometries);
+                if (mergedBaseFill) {
+                    const baseFillMesh = new THREE.Mesh(mergedBaseFill, fillerMaterial);
+                    baseFillMesh.name = 'gap_filler_base'; 
+                    markerArrayObjectGroup.add(baseFillMesh);
+                }
+            }
+
+            // --- Step 2: Add separate/elevated corner pieces if materials differ ---
+            if (cornerPieceMaterial !== fillerMaterial) {
+                // Helper to create a named mesh for a corner piece
+                function createCornerPieceMesh(geometry, namePrefix, r_idx, c_idx, zOffset, height) {
+                    const geo = geometry.clone(); // Use a clone if base geo is reused
+                    geo.translate(0,0,0); // Reset translation, apply based on parameters
+                    const newMesh = new THREE.Mesh(new THREE.BoxGeometry(geo.parameters.width, geo.parameters.height, height), cornerPieceMaterial);
+                    
+                    // Re-calculate translation for the specific piece based on its type and indices
+                    // This part is tricky because geometry passed might not have its final translation state.
+                    // It's better to pass dimensions and center coordinates directly to this helper.
+
+                    // Let's redefine: createCornerPieceMesh(dims, centerPos, namePrefix, r_idx, c_idx, material, zOffset, height)
+                    // For now, sticking to geometry as input means previous translate was for base layer.
+                    // We need to re-calculate world position for the center of the piece, then apply new Z.
+                }
+
+                const cornerPieceGeoDefs = []; // To store {width, depth, centerX, centerY, namePrefix, r_idx, c_idx}
+
+                // A. Inter-marker intersections
+                if (gridX > 1 && gridY > 1 && gap > 1e-5) {
+                    for (let r_intersect = 0; r_intersect < gridY - 1; r_intersect++) {
+                        for (let c_intersect = 0; c_intersect < gridX - 1; c_intersect++) {
+                            cornerPieceGeoDefs.push({
+                                width: gap, depth: gap, 
+                                centerX: c_intersect * (dim + gap) - (gridX - 1) * (dim + gap) / 2 + (dim/2) + (gap/2),
+                                centerY: (gridY - 1 - (r_intersect + 1)) * (dim + gap) - (gridY - 1) * (dim + gap) / 2 + (dim / 2) + (gap / 2),
+                                namePrefix: 'intersection_fill', r_idx: r_intersect, c_idx: c_intersect
+                            });
+                        }
+                    }
+                }
+
+                // B. Outer Border Corners (4 of them)
+                if (borderWidth > 1e-5) {
+                    const outerCorners = [
+                        { x: -markersAreaWidth/2 - borderWidth/2, y: markersAreaHeight/2 + borderWidth/2, name: 'outer_corner_tl' },
+                        { x: markersAreaWidth/2 + borderWidth/2,  y: markersAreaHeight/2 + borderWidth/2, name: 'outer_corner_tr' },
+                        { x: -markersAreaWidth/2 - borderWidth/2, y: -markersAreaHeight/2 - borderWidth/2, name: 'outer_corner_bl' },
+                        { x: markersAreaWidth/2 + borderWidth/2,  y: -markersAreaHeight/2 - borderWidth/2, name: 'outer_corner_br' }
+                    ];
+                    outerCorners.forEach(c => cornerPieceGeoDefs.push({ width: borderWidth, depth: borderWidth, centerX: c.x, centerY: c.y, namePrefix: c.name.substring(0, c.name.lastIndexOf('_')) , r_idx: c.name.split('_')[2] }) ); // थोड़ा hacky name parsing
+                
+                    // C. Edge Intersections
+                    if (gridX > 1) { // Top & Bottom edges
+                        for (let c_edge = 0; c_edge < gridX - 1; c_edge++) {
+                            const edgeX = c_edge*(dim+gap) - (gridX-1)*(dim+gap)/2 + (dim/2) + (gap/2);
+                            cornerPieceGeoDefs.push({ width: gap, depth: borderWidth, centerX: edgeX, centerY: markersAreaHeight/2 + borderWidth/2, namePrefix: 'edge_top_corner', r_idx: 0, c_idx: c_edge });
+                            cornerPieceGeoDefs.push({ width: gap, depth: borderWidth, centerX: edgeX, centerY: -markersAreaHeight/2 - borderWidth/2, namePrefix: 'edge_bottom_corner', r_idx: 0, c_idx: c_edge });
+                        }
+                    }
+                    if (gridY > 1) { // Left & Right edges
+                        for (let r_edge = 0; r_edge < gridY - 1; r_edge++) {
+                            const edgeY = (gridY-1-(r_edge+1))*(dim+gap) - (gridY-1)*(dim+gap)/2 + (dim/2) + (gap/2);
+                            cornerPieceGeoDefs.push({ width: borderWidth, depth: gap, centerX: -markersAreaWidth/2 - borderWidth/2, centerY: edgeY, namePrefix: 'edge_left_corner', r_idx: r_edge, c_idx: 0 });
+                            cornerPieceGeoDefs.push({ width: borderWidth, depth: gap, centerX: markersAreaWidth/2 + borderWidth/2, centerY: edgeY, namePrefix: 'edge_right_corner', r_idx: r_edge, c_idx: 0 });
+                        }
+                    }
+                }
+
+                // Now create meshes from definitions
+                for (const def of cornerPieceGeoDefs) {
+                    let pieceHeight, pieceZOffset;
+                    let finalNamePrefix = def.namePrefix;
+                    let currentMaterial = cornerPieceMaterial; // Use cornerPieceMaterial by default
+
+                    if (extrusionType === 'flat') {
+                        // This branch is now only entered if cornerPieceMaterial !== fillerMaterial
+                        pieceHeight = baseFillThickness;
+                        pieceZOffset = baseFillZOffset; // Co-planar with the (now gapped) base layer
+                        finalNamePrefix = 'flat_opposite_' + def.namePrefix; 
+                    } else { // Positive or Negative extrusion, so elevate
+                        // This branch is only entered if cornerPieceMaterial !== fillerMaterial
+                        if (actualFeatureHeightForCorners < 1e-5) continue; 
+                        pieceHeight = actualFeatureHeightForCorners;
+                        pieceZOffset = elevatedCornerZOffset;
+                        finalNamePrefix = 'elevated_' + def.namePrefix;
+                    }
+                    const cornerMeshGeo = new THREE.BoxGeometry(def.width, def.depth, pieceHeight);
+                    cornerMeshGeo.translate(def.centerX, def.centerY, pieceZOffset);
+                    const cornerMesh = new THREE.Mesh(cornerMeshGeo, currentMaterial);
+                    // Construct name carefully based on indices presence
+                    let name = finalNamePrefix;
+                    if (def.r_idx !== undefined && String(def.r_idx).match(/^[a-zA-Z]{2}$/)) { // For tl, tr, bl, br from outer_corner_XX
+                        name += `_${def.r_idx}`;
+                    } else {
+                        if (def.r_idx !== undefined) name += `_${def.r_idx}`;
+                        if (def.c_idx !== undefined) name += `_${def.c_idx}`;
+                    }
+                    cornerMesh.name = name;
+                    markerArrayObjectGroup.add(cornerMesh);
                 }
             }
         }
@@ -265,6 +437,7 @@ export function initControls(loadDictPromise) {
             errorDisplay.innerHTML = `Array: ${gridX}x${gridY} of ${dictName}. Gap: ${gap}mm. Total Z: ${currentFileNameTotalZ.toFixed(2)}mm`;
         } else {
             errorDisplay.innerHTML = 'No markers generated for the array.';
+            allActiveButtons.forEach(btn => { if(btn) btn.disabled = true; });
         }
     }
 
@@ -329,13 +502,7 @@ export function initControls(loadDictPromise) {
         document.body.removeChild(link);
     }
 
-    function exportSTLArray() {
-        if (!markerArrayObjectGroup || markerArrayObjectGroup.children.length === 0) return;
-        markerArrayObjectGroup.updateMatrixWorld(true);
-        const exporter = new THREE.STLExporter();
-        const stlString = exporter.parse(markerArrayObjectGroup, { binary: false });
-        const blob = new Blob([stlString], { type: 'model/stl' });
-
+    function getArrayBaseFilename() {
         const gridX = Number(gridXInput.value);
         const gridY = Number(gridYInput.value);
         const gap = Number(gapInput.value);
@@ -346,33 +513,83 @@ export function initControls(loadDictPromise) {
         const dictName = dictSelect.options[dictSelect.selectedIndex].value;
         const z2_actual = (extrusionType === "flat") ? 1e-5 : z2_feature;
         let fileNameTotalZ = (extrusionType === "flat") ? Math.max(z1_base, 0.1) : z1_base + z2_actual;
-        const fileName = `${dictName}_array-${gridX}x${gridY}_${dim}x${dim}x${fileNameTotalZ.toFixed(2)}mm_gap${gap}mm_${extrusionType}.stl`;
-        triggerDownload(blob, fileName);
+        return `${dictName}_array-${gridX}x${gridY}_${dim}x${dim}x${fileNameTotalZ.toFixed(2)}mm_gap${gap}mm_${extrusionType}`;
     }
 
+    // Kept exportGLBArray (exports full colored array)
     function exportGLBArray() {
-        if (!markerArrayObjectGroup || markerArrayObjectGroup.children.length === 0) return;
+        if (!markerArrayObjectGroup || markerArrayObjectGroup.children.length === 0) {
+            console.warn("No array generated to export for GLB.");
+            return;
+        }
         markerArrayObjectGroup.updateMatrixWorld(true);
         const exporter = new THREE.GLTFExporter();
         exporter.parse(markerArrayObjectGroup, function (result) {
             const blob = new Blob([result], { type: 'model/gltf-binary' });
-            const gridX = Number(gridXInput.value);
-            const gridY = Number(gridYInput.value);
-            const gap = Number(gapInput.value);
-            const dim = Number(dimInput.value);
-            const z1_base = Number(z1Input.value);
-            const z2_feature = Number(z2Input.value);
-            const extrusionType = document.querySelector('input[name="extrusion"]:checked').value;
-            const dictName = dictSelect.options[dictSelect.selectedIndex].value;
-            const z2_actual = (extrusionType === "flat") ? 1e-5 : z2_feature;
-            let fileNameTotalZ = (extrusionType === "flat") ? Math.max(z1_base, 0.1) : z1_base + z2_actual;
-            const fileName = `${dictName}_array-${gridX}x${gridY}_${dim}x${dim}x${fileNameTotalZ.toFixed(2)}mm_gap${gap}mm_${extrusionType}.glb`;
+            const fileName = getArrayBaseFilename() + '.glb'; // Full GLB array filename
             triggerDownload(blob, fileName);
         }, { binary: true });
     }
 
-    if (saveStlArrayButton) saveStlArrayButton.addEventListener('click', exportSTLArray);
-    if (saveGlbArrayButton) saveGlbArrayButton.addEventListener('click', exportGLBArray);
+    function getColoredElementsFromArray(mainArrayGroup, targetMaterial) {
+        const coloredGroup = new THREE.Group();
+        if (!mainArrayGroup) return coloredGroup;
+        mainArrayGroup.updateMatrixWorld(true);
+
+        mainArrayGroup.children.forEach(child => {
+            if (child.isMesh) {
+                // Handle base filler and individually named corner pieces
+                if (child.name === 'gap_filler_base' || 
+                    child.name.startsWith('elevated_') || 
+                    child.name.startsWith('flat_opposite_')) {
+                    if (child.material === targetMaterial) {
+                        const clonedMesh = new THREE.Mesh(child.geometry.clone(), child.material);
+                        // These meshes are already positioned correctly relative to the mainArrayGroup origin
+                        coloredGroup.add(clonedMesh);
+                    }
+                }
+                // Potentially other direct meshes if any, but primary focus is above and groups below
+            } else if (child.isGroup) { // These are the marker groups
+                child.updateMatrixWorld(true); // Ensure marker group's matrix is current
+                child.children.forEach(meshInMarker => {
+                    if (meshInMarker.isMesh && meshInMarker.material === targetMaterial) {
+                        const clonedMesh = new THREE.Mesh(meshInMarker.geometry.clone(), meshInMarker.material);
+                        // Apply the world matrix of the mesh within the marker to position it correctly in the exported group
+                        meshInMarker.updateWorldMatrix(true, false);
+                        clonedMesh.applyMatrix4(meshInMarker.matrixWorld);
+                        coloredGroup.add(clonedMesh);
+                    }
+                });
+            }
+        });
+        return coloredGroup;
+    }
+
+    // Kept exportSTLArrayColor for white/black STL array export
+    function exportSTLArrayColor(colorName) {
+        if (!markerArrayObjectGroup || markerArrayObjectGroup.children.length === 0) {
+            console.warn("No array to process for STL color export.");
+            return;
+        }
+        markerArrayObjectGroup.updateMatrixWorld(true);
+        const targetMaterial = colorName === 'white' ? whiteMaterial : blackMaterial;
+        const colorGroup = getColoredElementsFromArray(markerArrayObjectGroup, targetMaterial);
+        if (colorGroup.children.length > 0) {
+            const exporter = new THREE.STLExporter();
+            colorGroup.updateMatrixWorld(true);
+            const stlString = exporter.parse(colorGroup, { binary: false });
+            const baseFilename = getArrayBaseFilename();
+            triggerDownload(new Blob([stlString], { type: 'model/stl' }), `${baseFilename}_${colorName}.stl`);
+        } else {
+            alert(`No ${colorName} elements found in array to export for STL.`);
+            console.warn(`No ${colorName} elements in array to export for STL.`);
+        }
+    }
+
+    // Updated Event listeners
+    if (saveWhiteStlArrayButton) saveWhiteStlArrayButton.addEventListener('click', () => exportSTLArrayColor('white'));
+    if (saveBlackStlArrayButton) saveBlackStlArrayButton.addEventListener('click', () => exportSTLArrayColor('black'));
+    if (saveGlbArrayButton) saveGlbArrayButton.addEventListener('click', exportGLBArray); // Exports full colored GLB array
 
     dictSelect.addEventListener('change', () => { prefillIds(); updateMarkerArray(); });
     gridXInput.addEventListener('input', () => { prefillIds(); updateMarkerArray(); });
@@ -385,7 +602,10 @@ export function initControls(loadDictPromise) {
     document.querySelectorAll('input[name="extrusion"]').forEach(radio => {
         radio.addEventListener('change', updateMarkerArray);
     });
-    document.querySelectorAll('input[name="gapFill"]').forEach(radio => { // Add listener for gap fill type
+    document.querySelectorAll('input[name="gapFill"]').forEach(radio => { 
+        radio.addEventListener('change', updateMarkerArray);
+    });
+    document.querySelectorAll('input[name="cornerFill"]').forEach(radio => { 
         radio.addEventListener('change', updateMarkerArray);
     });
     refillButton.addEventListener('click', prefillIds);
@@ -393,12 +613,12 @@ export function initControls(loadDictPromise) {
     startIdInput.addEventListener('input', () => { /* Just an input, prefill handles it */ });
 
     loadDictPromise.then(() => {
-        prefillIds(); // Prefill IDs based on default grid size and start ID
+        prefillIds(); 
         updateMarkerArray();
     }).catch(err => {
         console.error("Error in initial marker array update based on dictionary load:", err);
-        if (saveStlArrayButton) saveStlArrayButton.disabled = true;
-        if (saveGlbArrayButton) saveGlbArrayButton.disabled = true;
+        const allActiveButtons = [saveWhiteStlArrayButton, saveBlackStlArrayButton, saveGlbArrayButton];
+        allActiveButtons.forEach(btn => { if(btn) btn.disabled = true; });
         document.querySelector('.marker-id').innerHTML = 'Error during initial array setup.';
     });
 } 

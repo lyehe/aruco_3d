@@ -69,6 +69,23 @@
                 <label for="frm-flat" class="radio-label">Flat</label>
             </div>
         </div>
+        <div class="field">
+            <label for="frm-enable-border">Add Border:</label>
+            <input type="checkbox" id="frm-enable-border" name="enableBorder">
+        </div>
+        <div class="field" id="border-width-field" style="display: none;">
+            <label for="frm-border-width">Border Width (mm):</label>
+            <input id="frm-border-width" name="borderWidth" type="number" min="0.1" step="0.1" value="5">
+        </div>
+        <div class="field" id="border-corner-field" style="display: none;">
+            <label>Border Corner Color:</label>
+            <div class="radio-group">
+                <input type="radio" id="frm-corner-same" name="borderCornerType" value="same" checked>
+                <label for="frm-corner-same" class="radio-label">Same as Border (White)</label>
+                <input type="radio" id="frm-corner-opposite" name="borderCornerType" value="opposite">
+                <label for="frm-corner-opposite" class="radio-label">Opposite to Border (Black)</label>
+            </div>
+        </div>
     </form>
 
     <div class="marker-id"></div>
@@ -77,18 +94,17 @@
     </div>
 
     <div class="tools">
-        <button type="button" id="save-stl-button" class="save-button">Save STL</button>
-        <button type="button" id="save-glb-button" class="save-button">Save GLB</button>
-        or <a href="javascript:window.print()">print page view</a>.
+        <button type="button" id="save-white-stl-button" class="save-button">Save White STL</button>
+        <button type="button" id="save-black-stl-button" class="save-button">Save Black STL</button>
+        <br>
+        <button type="button" id="save-glb-button" class="save-button">Save Colored GLB</button>
     </div>
     <footer>
         <div>
-            If you like this project, please <a href="https://github.com/okalachev/arucogen">
-                <nobr>★ original on GitHub</nobr>
-            </a>!
+            <!-- Removed GitHub link and related text -->
         </div>
         <div>
-            Original Author: <a href="http://chev.me">Oleg Kalachev</a>. (Adapted for STL)
+            <!-- Removed Author link and related text -->
         </div>
     </footer>
     <script type="module" src="js/app.js"></script>

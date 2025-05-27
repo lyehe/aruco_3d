@@ -35,11 +35,74 @@ export function getArucoBitPattern(dictName, id, patternWidth, patternHeight) {
     return fullPattern;
 }
 
-export function generateMarkerMesh(fullPattern, dimX, dimY, z1_baseThickness, z2_featureThickness, extrusionType) {
+export function generateMarkerMesh(fullPattern, dimX, dimY, z1_baseThickness, z2_featureThickness, extrusionType, specialMarkerType) {
     const newMeshGroup = new THREE.Group();
 
-    const numRowsTotal = fullPattern.length; // For ArUco pattern
-    const numColsTotal = fullPattern[0].length; // For ArUco pattern
+    if (specialMarkerType === 'pureWhite' || specialMarkerType === 'pureBlack') {
+        let actual_z1 = z1_baseThickness;
+        let initial_actual_z2 = z2_featureThickness; // Store the original z2 request
+
+        if (extrusionType === "flat") {
+            const flatSpecialMaterial = specialMarkerType === 'pureWhite' ? whiteMaterial : blackMaterial;
+            let flatThickness = Math.max(actual_z1, 1e-5);
+            if (flatThickness < 0.1) flatThickness = 0.1;
+
+            const flatSpecialGeo = new THREE.BoxGeometry(dimX, dimY, flatThickness);
+            flatSpecialGeo.translate(0, 0, flatThickness / 2);
+            newMeshGroup.add(new THREE.Mesh(flatSpecialGeo, flatSpecialMaterial));
+        } else { // For "positive" or "negative" extrusionType
+            let baseMaterialForSpecial;
+            let final_actual_z2 = initial_actual_z2; // This will be adjusted
+
+            if (extrusionType === "positive") {
+                baseMaterialForSpecial = whiteMaterial;
+            } else if (extrusionType === "negative") {
+                baseMaterialForSpecial = blackMaterial;
+            } else {
+                console.error(`Special marker (${specialMarkerType}) with unexpected extrusion type: "${extrusionType}". Defaulting base to white.`);
+                baseMaterialForSpecial = whiteMaterial; // Fallback
+            }
+
+            const intendedFeatureMaterialForSpecial = specialMarkerType === 'pureWhite' ? whiteMaterial : blackMaterial;
+
+            // Suppress feature layer if it's the same color as the base
+            if (baseMaterialForSpecial === intendedFeatureMaterialForSpecial) {
+                final_actual_z2 = 0;
+            }
+
+            // Handle the minimal thickness case (applies if z1 is zero and z2 is zero *or* z2 was suppressed)
+            if (actual_z1 < 1e-5 && final_actual_z2 < 1e-5) {
+                actual_z1 = 0.1;
+                // final_actual_z2 remains 0, as established by suppression or initial value
+            }
+
+
+            // Create Base plate (z1)
+            if (actual_z1 >= 1e-5) {
+                const basePlateGeo = new THREE.BoxGeometry(dimX, dimY, actual_z1);
+                basePlateGeo.translate(0, 0, actual_z1 / 2);
+                newMeshGroup.add(new THREE.Mesh(basePlateGeo, baseMaterialForSpecial));
+            }
+
+            // Create Feature layer (z2) on top, if final_actual_z2 is significant
+            if (final_actual_z2 >= 1e-5) {
+                const featureLayerGeo = new THREE.BoxGeometry(dimX, dimY, final_actual_z2);
+                const baseHeightForFeatureStack = (actual_z1 >= 1e-5) ? actual_z1 : 0;
+                featureLayerGeo.translate(0, 0, baseHeightForFeatureStack + final_actual_z2 / 2);
+                newMeshGroup.add(new THREE.Mesh(featureLayerGeo, intendedFeatureMaterialForSpecial));
+            }
+        }
+        return newMeshGroup;
+    }
+
+    // Existing ArUco pattern generation logic follows
+    if (!fullPattern || fullPattern.length === 0) {
+        console.error("No pattern provided for ArUco marker generation and not a special marker type.");
+        return newMeshGroup; // Return empty group if no pattern and not special
+    }
+
+    const numRowsTotal = fullPattern.length;
+    const numColsTotal = fullPattern[0].length;
     const cellWidth = dimX / numColsTotal;
     const cellHeight = dimY / numRowsTotal;
 
@@ -55,72 +118,42 @@ export function generateMarkerMesh(fullPattern, dimX, dimY, z1_baseThickness, z2
         featureHeightActual = z2_featureThickness;
         createFeatureCondition = (patternBit) => patternBit === 1;
     } else if (extrusionType === "flat") {
-        // For "flat", materials are assigned per cell, not globally as base/feature.
-        // featureHeightActual and createFeatureCondition are not used in the new flat logic.
-        // The z2_featureThickness input is effectively ignored for flat markers.
+        // Flat logic specific handling
     } else {
         console.error("Invalid extrusion type:", extrusionType);
         return newMeshGroup;
     }
 
-    // --- Geometry Construction ---
-
     if (extrusionType === "flat") {
-        const flatCellThickness = Math.max(z1_baseThickness, 0.1); // Ensure a minimum thickness
-        const cellGeometries = [];
-
+        const flatCellThickness = Math.max(z1_baseThickness, 0.1);
         for (let r = 0; r < numRowsTotal; r++) {
             for (let c = 0; c < numColsTotal; c++) {
                 const bit = fullPattern[r][c];
                 const cellMaterial = (bit === 0) ? blackMaterial : whiteMaterial;
-
                 const cellGeo = new THREE.BoxGeometry(cellWidth, cellHeight, flatCellThickness);
                 const cellCenterX = (c * cellWidth + cellWidth / 2) - (dimX / 2);
-                const cellCenterY = -((r * cellHeight + cellHeight / 2) - (dimY / 2)); // Y inverted
-                cellGeo.translate(cellCenterX, cellCenterY, flatCellThickness / 2); // Base at z=0
-                
-                // Create a mesh for each cell and add it. For STLExporter, they should be individual meshes if materials differ.
-                // If we were to merge, we would need to group by material first.
+                const cellCenterY = -((r * cellHeight + cellHeight / 2) - (dimY / 2));
+                cellGeo.translate(cellCenterX, cellCenterY, flatCellThickness / 2);
                 newMeshGroup.add(new THREE.Mesh(cellGeo, cellMaterial));
             }
         }
-        // No merging needed here if STLExporter handles multiple meshes with different materials in a group correctly.
-        // If merging is desired for performance/single object STL (though STL is usually material-agnostic),
-        // we would collect geometries for black and white cells separately and merge them.
-        // For now, assume STLExporter handles a group of individual black/white meshes.
-
     } else { // For "positive" and "negative" extrusions
         let actualBaseThickness = z1_baseThickness;
-        // This condition was for flat, which now has its own path.
-        // if (extrusionType === "flat" && z1_baseThickness < 1e-5) {
-        //     actualBaseThickness = 0; 
-        // }
-
         if (actualBaseThickness >= 1e-5) {
             const mainBasePlateGeo = new THREE.BoxGeometry(dimX, dimY, actualBaseThickness);
             mainBasePlateGeo.translate(0, 0, actualBaseThickness / 2);
             newMeshGroup.add(new THREE.Mesh(mainBasePlateGeo, basePlateMaterial));
-        } else if (z1_baseThickness >= 1e-5) { // Catch-all for non-flat, very thin base (should not be hit if z1_baseThickness is used)
-            const tinyPlaceholderBase = new THREE.BoxGeometry(dimX, dimY, z1_baseThickness);
-            tinyPlaceholderBase.translate(0, 0, z1_baseThickness / 2);
-            newMeshGroup.add(new THREE.Mesh(tinyPlaceholderBase, basePlateMaterial));
         }
-
         const arucoFeaturesBaseZ = actualBaseThickness;
-        // effectiveFeatureHeightForGeo was for flat, now positive/negative use featureHeightActual directly
-        // const effectiveFeatureHeightForGeo = (extrusionType === "flat") ? 1e-5 : featureHeightActual;
-        const currentFeatureHeight = featureHeightActual; // Use the already determined featureHeightActual
-
+        const currentFeatureHeight = featureHeightActual;
         if (currentFeatureHeight >= 1e-5) {
             const featureCellGeometries = [];
             const featureZOffset = arucoFeaturesBaseZ + currentFeatureHeight / 2;
-
             for (let r_aruco = 0; r_aruco < numRowsTotal; r_aruco++) {
                 for (let c_aruco = 0; c_aruco < numColsTotal; c_aruco++) {
                     if (createFeatureCondition(fullPattern[r_aruco][c_aruco])) {
                         const cellCenterX = (c_aruco * cellWidth + cellWidth / 2) - (dimX / 2);
                         const cellCenterY = -((r_aruco * cellHeight + cellHeight / 2) - (dimY / 2));
-
                         const featureGeo = new THREE.BoxGeometry(cellWidth, cellHeight, currentFeatureHeight);
                         featureGeo.translate(cellCenterX, cellCenterY, featureZOffset);
                         featureCellGeometries.push(featureGeo);

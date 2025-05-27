@@ -65,6 +65,15 @@
                 <label for="frm-gap-white" class="radio-label">Fill White</label>
             </div>
         </div>
+        <div class="field">
+            <label>Corner Fill Type:</label>
+            <div class="radio-group">
+                <input type="radio" id="frm-corner-same" name="cornerFill" value="same" checked>
+                <label for="frm-corner-same" class="radio-label">Same as Border</label>
+                <input type="radio" id="frm-corner-opposite" name="cornerFill" value="opposite">
+                <label for="frm-corner-opposite" class="radio-label">Opposite to Border</label>
+            </div>
+        </div>
          <div class="field">
             <label for="frm-start-id">Start ID for Refill:</label>
             <input id="frm-start-id" name="startId" type="number" min="0" value="0">
@@ -108,18 +117,17 @@
     </div>
 
     <div class="tools">
-        <button type="button" id="save-stl-array-button" class="save-button">Save STL Array</button>
-        <button type="button" id="save-glb-array-button" class="save-button">Save GLB Array</button>
-        or <a href="javascript:window.print()">print page view</a>.
+        <button type="button" id="save-white-stl-array-button" class="save-button">Save White STL Array</button>
+        <button type="button" id="save-black-stl-array-button" class="save-button">Save Black STL Array</button>
+        <br>
+        <button type="button" id="save-glb-array-button" class="save-button">Save Colored GLB Array</button>
     </div>
     <footer>
         <div>
-            If you like this project, please <a href="https://github.com/okalachev/arucogen">
-                <nobr>★ original on GitHub</nobr>
-            </a>! (Array version based on original)
+            <!-- Removed GitHub link and related text -->
         </div>
         <div>
-            Original Author: <a href="http://chev.me">Oleg Kalachev</a>. (Adapted for STL and Array)
+            <!-- Removed Author link and related text -->
         </div>
     </footer>
     <script type="module" src="js/array_app.js"></script>
