@@ -1,64 +1,309 @@
-
-/* ... (existing styles) ... */
-
-.setup {
-	margin: 20px auto;
-	/* width: 440px; Adjust as needed for new fields */
-    width: 500px; 
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
 }
 
-.setup label {
-	/* width: 150px; Adjust as needed */
-    width: 180px; 
+/* General body and typography */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 15px;
+    background-color: #f4f4f4;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
-.setup .radio-group {
+h1 {
+    text-align: left;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.5em;
+}
+
+/* Main content wrapper for layout */
+.main-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex-grow: 1;
+}
+
+/* Form setup and fieldsets */
+form.setup {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+}
+
+fieldset {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+legend {
+    font-weight: bold;
+    color: #555;
+    padding: 0 5px;
+    margin-bottom: 5px;
+}
+
+/* Individual form fields */
+.field {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.field-stacked {
+    flex-direction: column;
+    /* Stack label and control */
+    align-items: flex-start;
+    /* Align items to the start of the container */
+    gap: 4px;
+    /* Reduced gap for stacked items */
+}
+
+
+.field-stacked .radio-group,
+.field-stacked textarea {
+    width: 100%;
+    /* Ensure the control takes full width in stacked layout */
+}
+
+.field label {
+    font-weight: normal;
+    flex-shrink: 0;
+}
+
+.field input[type="text"],
+.field input[type="number"],
+.field select,
+.field textarea {
+    flex-grow: 1;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    min-width: 0;
+}
+
+.field textarea {
+    resize: vertical;
+    min-height: 50px;
+}
+
+/* Radio button styling */
+.radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    /* Spacing between input & label, and label & next input */
+    align-items: center;
+    /* Vertically align items in the group */
+}
+
+.radio-label {
+    /* margin-left: 3px; Removed, rely on gap */
+    /* margin-right: 8px; Removed, rely on gap */
+    font-weight: normal;
+    cursor: pointer;
     display: inline-block;
-    margin-left: 20px;
+    /* Changed from inline-flex for simpler alignment */
+    vertical-align: middle;
+    /* Align with radio button */
+    font-size: 0.9em;
+    white-space: nowrap;
+    /* Prevent text within the label from wrapping */
 }
 
-.setup .radio-label {
-    width: auto;
-    margin-left: 5px;
-    margin-right: 15px;
-    color: black; /* Make radio labels normally visible */
-    font-size: 15px;
+input[type="radio"] {
+    /* margin-right: 2px; Removed, rely on gap */
+    vertical-align: middle;
+    /* Align with label */
 }
 
+/* New styles for preview header */
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    /* Pushes marker-id to left, tools to right */
+    align-items: center;
+    /* Vertically aligns items in the middle */
+    margin-bottom: 10px;
+    /* Space below the header */
+}
+
+/* Preview and tools section */
+.preview-and-tools-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
 
 #stl-preview-container {
-    text-align: center;
-    margin: 20px;
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
 }
 
 #stl-preview {
-    display: inline-block; /* Allows centering */
-	width: 400px; /* Adjust as needed */
-	height: 400px; /* Adjust as needed */
-	border: 1px solid #ccc;
-    background-color: #f0f0f0;
-    position: relative; /* For potential overlays or loaders */
+    width: 100%;
+    height: 400px;
+    max-width: 100%;
 }
 
-.marker { /* Hide old SVG marker or repurpose */
-	display: none; 
+.marker-id {
+    text-align: left;
+    /* Align text to the left */
+    margin-bottom: 0;
+    /* Remove bottom margin as it's handled by preview-header */
+    font-weight: bold;
+    color: #007bff;
+    flex-grow: 1;
+    /* Allows it to take available space on the left */
+}
+
+/* Buttons */
+.tools {
+    text-align: right;
+    /* Align buttons to the right */
+    margin-top: 0;
+    /* Remove top margin as it's handled by preview-header */
+    flex-shrink: 0;
+    /* Prevent buttons from shrinking */
+}
+
+.tools button,
+#btn-refill-ids,
+/* Though these are not in .tools div anymore, keeping style for consistency if they were elsewhere */
+#btn-randomize-ids {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95em;
+    margin: 3px;
+    transition: background-color 0.3s ease;
+}
+
+.tools button:hover,
+#btn-refill-ids:hover,
+#btn-randomize-ids:hover {
+    background-color: #0056b3;
+}
+
+.tools button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* Footer styling */
+footer {
+    text-align: center;
+    margin-top: 0;
+    /* Reduced */
+    padding: 5px;
+    /* Significantly Reduced */
+    /* background-color: #e9e9e9; */
+    /* Removed background */
+    /* border-top: 1px solid #ddd; */
+    /* Removed border */
+    font-size: 0.9em;
+    color: #555;
+    width: 100%;
+    /* box-sizing: border-box; */
+    /* Already handled by universal box-sizing */
+}
+
+/* Desktop layout (min-width: 768px) */
+@media (min-width: 768px) {
+    .main-content-wrapper {
+        flex-direction: row;
+    }
+
+    form.setup {
+        width: 330px;
+        /* flex-shrink: 0; */
+        /* Removed to allow shrinking */
+        min-width: 280px;
+        /* Added to prevent becoming too narrow */
+        max-height: calc(100vh - 30px);
+        padding-top: 15px;
+    }
+
+    form.setup h1 {
+        margin-top: 0;
+        padding-left: 5px;
+    }
+
+    .preview-and-tools-wrapper {
+        flex-grow: 1;
+    }
+
+    #stl-preview {
+        /* Adjust height calculation if preview-header takes up significant space */
+        height: calc(100% - 25px - 30px);
+        /* Approx height of marker-id + preview-header margin */
+        min-height: 300px;
+    }
+
+    .preview-header .tools button {
+        display: inline-block;
+        /* Ensure buttons stay in line */
+    }
+}
+
+/* Further adjustments for larger screens if needed */
+@media (min-width: 1024px) {
+    form.setup {
+        width: 380px;
+        /* This will still apply as the ideal width, but can shrink to min-width if needed */
+    }
+
+    form.setup h1 {
+        font-size: 1.6em;
+    }
 }
 
 /* ... (existing print styles, might need adjustment if you want to print the preview) ... */
 @media print {
-	body > * {
-		display: none; /* Hides everything by default for printing */
-	}
-    h1, .setup, .tools, footer {
-        display: none !important; /* Ensure these are hidden */
+    body>* {
+        display: none;
     }
-	#stl-preview-container, .marker-id { /* Only show these for print */
-		display: block !important;
+
+    h1,
+    .setup,
+    .tools,
+    footer {
+        display: none !important;
+    }
+
+    #stl-preview-container,
+    .marker-id {
+        display: block !important;
         border: none !important;
-	}
+    }
+
     #stl-preview {
-        width: 100% !important; /* Full width for print */
-        height: auto !important; /* Adjust height automatically */
+        width: 100% !important;
+        height: auto !important;
         border: none !important;
         /* Note: 3D canvas printing is tricky. This might just print a static view or blank. */
     }

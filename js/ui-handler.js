@@ -18,11 +18,7 @@ export function initControls(loadDictPromise) {
     const z2Input = document.querySelector('.setup input[name=z2]');
 
     // Border UI elements
-    const enableBorderCheckbox = document.getElementById('frm-enable-border');
-    const borderWidthField = document.getElementById('border-width-field');
     const borderWidthInput = document.getElementById('frm-border-width');
-    const borderCornerField = document.getElementById('border-corner-field');
-    // const borderCornerTypeRadios = document.querySelectorAll('input[name="borderCornerType"]'); // Read in updateMarker
 
     // Button selectors for the simplified set
     const saveWhiteStlButton = document.getElementById('save-white-stl-button');
@@ -49,7 +45,6 @@ export function initControls(loadDictPromise) {
         const errorDisplay = document.querySelector('.marker-id');
 
         // Read border values
-        const enableBorder = enableBorderCheckbox.checked;
         const borderWidth = Number(borderWidthInput.value);
         const borderCornerType = document.querySelector('input[name="borderCornerType"]:checked').value;
 
@@ -62,9 +57,9 @@ export function initControls(loadDictPromise) {
         if (dim <= 0) {
             isValid = false;
             errorMsg = 'Marker dimension (X/Y) must be positive.';
-        } else if (enableBorder && borderWidth < 0.1) {
+        } else if (borderWidth > 1e-5 && borderWidth < 0.1) { // If border is enabled (width > 0), it must be >= 0.1
             isValid = false;
-            errorMsg = 'Border width must be at least 0.1mm.';
+            errorMsg = 'Border width must be at least 0.1mm if specified (or 0 for no border).';
         } else if (markerIdNum === -1 || markerIdNum === -2) { // Pure white or pure black
             if (z1_base < 0 || z2_feature < 0) {
                  isValid = false;
@@ -140,8 +135,8 @@ export function initControls(loadDictPromise) {
                 markerIdNum = Number(markerIdInput.value);
             }
             if (!dict[dictName] || !dict[dictName][markerIdNum]) {
-                if (localMarkerObjectGroup) {
-                    scene.remove(localMarkerObjectGroup);
+            if (localMarkerObjectGroup) {
+                scene.remove(localMarkerObjectGroup);
                     localMarkerObjectGroup.traverse(child => { if (child.isMesh && child.geometry) child.geometry.dispose(); });
                     localMarkerObjectGroup.clear();
                 }
@@ -161,8 +156,8 @@ export function initControls(loadDictPromise) {
         // Cleanup previous marker and border
         if (localMarkerObjectGroup) {
             scene.remove(localMarkerObjectGroup); // localMarkerObjectGroup might be finalMarkerWithBorderGroup
-            localMarkerObjectGroup.traverse(child => { 
-                if (child.isMesh && child.geometry) child.geometry.dispose();
+                localMarkerObjectGroup.traverse(child => {
+                    if (child.isMesh && child.geometry) child.geometry.dispose();
                 if (child.isGroup) { // Handle nested groups like the original marker or border group
                     child.traverse(subChild => {
                         if (subChild.isMesh && subChild.geometry) subChild.geometry.dispose();
@@ -174,7 +169,7 @@ export function initControls(loadDictPromise) {
         
         const coreMarkerGroup = generateMarkerMesh(fullPattern, dim, dim, z1_base, z2_feature, extrusionType, specialMarkerType);
 
-        if (enableBorder && borderWidth > 0) {
+        if (borderWidth > 1e-5) { // Check if border width is greater than a very small number
             const finalMarkerWithBorderGroup = new THREE.Group();
             finalMarkerWithBorderGroup.add(coreMarkerGroup); // Add the original marker
 
@@ -359,12 +354,9 @@ export function initControls(loadDictPromise) {
         
         let baseName = `${dictName}-${idPart}_${dim}x${dim}x${totalZ.toFixed(2)}mm_${extrusionType}`;
 
-        const enableBorder = document.getElementById('frm-enable-border').checked;
-        if (enableBorder) {
-            const borderWidth = Number(document.getElementById('frm-border-width').value);
-            if (borderWidth > 0) {
-                baseName += `_border${borderWidth.toFixed(1)}mm`;
-            }
+        const borderWidthValue = Number(document.getElementById('frm-border-width').value);
+        if (borderWidthValue > 1e-5) { // Check if border width is greater than a very small number
+            baseName += `_border${borderWidthValue.toFixed(1)}mm`;
         }
         return baseName;
     }
@@ -457,11 +449,6 @@ export function initControls(loadDictPromise) {
     });
 
     // Border UI event listeners
-    enableBorderCheckbox.addEventListener('change', () => {
-        borderWidthField.style.display = enableBorderCheckbox.checked ? 'block' : 'none';
-        borderCornerField.style.display = enableBorderCheckbox.checked ? 'block' : 'none';
-        updateMarker();
-    });
     borderWidthInput.addEventListener('input', updateMarker);
     document.querySelectorAll('input[name="borderCornerType"]').forEach(radio => {
         radio.addEventListener('change', updateMarker);
