@@ -105,7 +105,6 @@ const digitFont = {
     ]
 };
 
-
 function initThree() {
     const previewDiv = document.getElementById('stl-preview');
     const width = previewDiv.clientWidth;
@@ -214,6 +213,7 @@ function generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_baseThickne
     const engraveCharPixelSize = engraveCharHeight / 7;
     const engraveCharWidth = engraveCharPixelSize * 5;
     const charSpacing = engraveCharPixelSize * 1.5;
+    const marginFromEdge = engraveCharPixelSize * 2;
 
     const engraveGridCols = Math.ceil(dimX / engraveCharPixelSize);
     const engraveGridRows = Math.ceil(dimY / engraveCharPixelSize);
@@ -222,7 +222,6 @@ function generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_baseThickne
 
     let baseEngravingGrid = Array(engraveGridRows).fill(null).map(() => Array(engraveGridCols).fill(1));
 
-    const marginFromEdge = engraveCharPixelSize * 2;
     const textBlockStartY = dimY / 2 - marginFromEdge;
     let currentX_engraveCharOrigin = -dimX / 2 + marginFromEdge;
 
@@ -249,11 +248,11 @@ function generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_baseThickne
         currentX_engraveCharOrigin += (engraveCharWidth + charSpacing);
     }
 
-
     if (extrusionType === "flat") {
         const flatPlateBaseMatGeos = [];
         const flatPlateFeatMatGeos = [];
 
+        // Create pixelated base with engraving
         for (let r_eng = 0; r_eng < engraveGridRows; r_eng++) {
             for (let c_eng = 0; c_eng < engraveGridCols; c_eng++) {
                 const pixelCenterX = (c_eng * engravePixelActualWidth + engravePixelActualWidth / 2) - (dimX / 2);
@@ -284,6 +283,7 @@ function generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_baseThickne
                 }
             }
         }
+
         if (flatPlateBaseMatGeos.length > 0) {
             markerObjectGroup.add(new THREE.Mesh(THREE.BufferGeometryUtils.mergeBufferGeometries(flatPlateBaseMatGeos), basePlateMaterial));
         }
@@ -291,7 +291,10 @@ function generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_baseThickne
             markerObjectGroup.add(new THREE.Mesh(THREE.BufferGeometryUtils.mergeBufferGeometries(flatPlateFeatMatGeos), featureMaterial));
         }
     } else {
+        // For positive/negative extrusion
         const basePlatePixelGeos = [];
+        
+        // Create pixelated base with engraving
         for (let r_eng = 0; r_eng < engraveGridRows; r_eng++) {
             for (let c_eng = 0; c_eng < engraveGridCols; c_eng++) {
                 const pixelCenterX = (c_eng * engravePixelActualWidth + engravePixelActualWidth / 2) - (dimX / 2);
@@ -313,21 +316,22 @@ function generateMarkerMesh(markerIdStr, fullPattern, dimX, dimY, z1_baseThickne
                 basePlatePixelGeos.push(pixelGeo);
             }
         }
+
         if (basePlatePixelGeos.length > 0) {
             markerObjectGroup.add(new THREE.Mesh(THREE.BufferGeometryUtils.mergeBufferGeometries(basePlatePixelGeos), basePlateMaterial));
         }
 
+        // Add feature cells (black/white pattern)
         if (featureHeightActual > 1e-5) {
             const featureCellGeometries = [];
             for (let r_aruco = 0; r_aruco < numRowsTotal; r_aruco++) {
                 for (let c_aruco = 0; c_aruco < numColsTotal; c_aruco++) {
                     if (createFeatureCondition(fullPattern[r_aruco][c_aruco])) {
+                        const cellCenterX = (c_aruco * cellWidth + cellWidth / 2) - (dimX / 2);
+                        const cellCenterY = -((r_aruco * cellHeight + cellHeight / 2) - (dimY / 2));
+                        
                         const featureGeo = new THREE.BoxGeometry(cellWidth, cellHeight, featureHeightActual);
-                        featureGeo.translate(
-                            (c_aruco * cellWidth + cellWidth / 2) - (dimX / 2),
-                            -((r_aruco * cellHeight + cellHeight / 2) - (dimY / 2)),
-                            baseHeightActual + (featureHeightActual / 2)
-                        );
+                        featureGeo.translate(cellCenterX, cellCenterY, baseHeightActual + (featureHeightActual / 2));
                         featureCellGeometries.push(featureGeo);
                     }
                 }
@@ -346,7 +350,7 @@ function initControls() {
     const dictSelect = document.querySelector('.setup select[name=dict]');
     const markerIdInput = document.querySelector('.setup input[name=id]');
     const dimInput = document.querySelector('.setup input[name=dim]');
-    const textHeightInput = document.querySelector('.setup input[name=textHeight]'); // Simple text height input
+    const textHeightInput = document.querySelector('.setup input[name=textHeight]');
     const z1Input = document.querySelector('.setup input[name=z1]');
     const z2Input = document.querySelector('.setup input[name=z2]');
     const saveButton = document.querySelector('.save-button');
@@ -374,23 +378,22 @@ function initControls() {
         const z2_actual = (extrusionType === "flat") ? 1e-5 : z2_feature;
 
         loadDict.then(() => {
-            // Keep only this maxId calculation inside the promise
             let maxId = 0;
             if (dict && dict[dictName]) {
                 maxId = dict[dictName].length - 1;
             } else if (option.getAttribute('data-number')) {
                 maxId = Number(option.getAttribute('data-number')) - 1;
-            } else { 
-                maxId = (dictName.includes("4x4")) ? 999 : 
-                       (dictName.includes("5x5")) ? 999 : 
-                       (dictName.includes("6x6_1000")) ? 999 : 
-                       (dictName.includes("7x7")) ? 999 : 
-                       (dictName === "mip_36h12") ? 249 : 
-                       (dictName === "april_16h5") ? 29 : 
-                       (dictName === "april_25h9") ? 34 : 
-                       (dictName === "april_36h10") ? 2319 : 
-                       (dictName === "april_36h11") ? 586 : 
-                       (dictName === "aruco") ? 1023 : 999; 
+            } else {
+                maxId = (dictName.includes("4x4")) ? 999 :
+                    (dictName.includes("5x5")) ? 999 :
+                        (dictName.includes("6x6_1000")) ? 999 :
+                            (dictName.includes("7x7")) ? 999 :
+                                (dictName === "mip_36h12") ? 249 :
+                                    (dictName === "april_16h5") ? 29 :
+                                        (dictName === "april_25h9") ? 34 :
+                                            (dictName === "april_36h10") ? 2319 :
+                                                (dictName === "april_36h11") ? 586 :
+                                                    (dictName === "aruco") ? 1023 : 999;
             }
             markerIdInput.setAttribute('max', maxId);
             if (markerIdNum > maxId) { markerIdInput.value = maxId; markerIdNum = maxId; }
@@ -399,13 +402,13 @@ function initControls() {
             if (!dict[dictName]) {
                 document.querySelector('.marker-id').innerHTML = `Dict '${dictName}' not found.`;
                 if (markerObjectGroup) scene.remove(markerObjectGroup);
-                saveButton.removeAttribute('href'); saveButton.removeAttribute('download'); 
+                saveButton.removeAttribute('href'); saveButton.removeAttribute('download');
                 return;
             }
             if (!dict[dictName][markerIdNum]) {
                 if (markerObjectGroup) scene.remove(markerObjectGroup);
                 saveButton.removeAttribute('href'); saveButton.removeAttribute('download');
-                document.querySelector('.marker-id').innerHTML = `ID ${markerIdNum} not found in ${dictName}`; 
+                document.querySelector('.marker-id').innerHTML = `ID ${markerIdNum} not found in ${dictName}`;
                 return;
             }
 
@@ -418,8 +421,10 @@ function initControls() {
             saveButton.href = 'data:model/stl;base64,' + btoa(stlString);
 
             const fileNameTotalZ = (extrusionType === "flat") ? z1_base : z1_base + z2_actual;
+            
+            let fileName = `${dictName}-${markerIdNum}_${dim}x${dim}x${fileNameTotalZ.toFixed(2)}mm_${extrusionType}_engravedID.stl`;
 
-            saveButton.download = `${dictName}-${markerIdNum}_${dim}x${dim}x${fileNameTotalZ.toFixed(2)}mm_${extrusionType}_engravedID.stl`;
+            saveButton.download = fileName;
             document.querySelector('.marker-id').innerHTML = `ID ${markerIdNum} (${dictName}) - ${extrusionType} (ID engraved)`;
         }).catch(err => {
             console.error("Error loading/processing dictionary:", err);
@@ -445,10 +450,8 @@ function initControls() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Ensure THREE.BufferGeometryUtils is available if you haven't included it elsewhere
+    // Ensure THREE.BufferGeometryUtils is available
     if (typeof THREE.BufferGeometryUtils === 'undefined') {
-        // Basic merge function if BufferGeometryUtils is not found (less efficient)
-        // For production, include the official THREE.BufferGeometryUtils from examples/jsm/utils
         console.warn("THREE.BufferGeometryUtils not found. Using basic fallback merge (less efficient).");
         THREE.BufferGeometryUtils = {
             mergeBufferGeometries: function (geometries) {
@@ -485,7 +488,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 let mergedIndices;
                 if (hasIndices) mergedIndices = new Uint32Array(totalIndices);
 
-
                 let vertexOffset = 0;
                 let indexOffset = 0;
 
@@ -519,7 +521,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
     }
-
 
     initThree();
     initControls();
