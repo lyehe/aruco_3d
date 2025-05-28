@@ -6,7 +6,7 @@ export function initThree() {
     const height = previewDiv.clientHeight;
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xdedede);
+    scene.background = new THREE.Color(0x707070);
 
     camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
     camera.position.set(60, 60, 120);
@@ -15,15 +15,23 @@ export function initThree() {
     renderer.setSize(width, height);
     previewDiv.appendChild(renderer.domElement);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
     scene.add(ambientLight);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.7);
     directionalLight.position.set(70, 120, 100);
     scene.add(directionalLight);
 
-    const bottomLight = new THREE.DirectionalLight(0xccddee, 0.6);
+    const bottomLight = new THREE.DirectionalLight(0xffffff, 0.2);
     bottomLight.position.set(0, -30, -50);
     scene.add(bottomLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffffff, 1.1);
+    rimLight.position.set(-60, 40, -70);
+    scene.add(rimLight);
+
+    // Add a 3D coordinate axes helper
+    const axesHelper = new THREE.AxesHelper(60); // Increased size
+    scene.add(axesHelper);
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
