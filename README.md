@@ -3,7 +3,7 @@
 **Live Page:** [https://lyehe.github.io/aruco_3d/](https://lyehe.github.io/aruco_3d/)
 
 ## Description
-A web-based tool to generate 3D printable patterns for ArUco markers, ChArUco boards, and marker arrays. These calibration targets are commonly used in computer vision and robotics applications. The generator allows customization of marker parameters, dimensions, and export formats.
+A web-based tool to generate 3D printable patterns for ArUco markers, enclosed ArUco, ChArUco boards, and marker arrays. These calibration targets are commonly used in computer vision and robotics applications. The generator allows customization of marker parameters, dimensions, and export formats. The designs can be used for a single color or a multi-color printer.
 
 ## Features
 *   Generate single ArUco/AprilTag markers.
