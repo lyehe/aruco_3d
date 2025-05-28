@@ -38,7 +38,7 @@ form.setup {
     background-color: #FFFFFF;
     padding: 10px 20px;
     border-radius: 6px;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
     flex-basis: 30vw;
     flex-shrink: 0;
     overflow-y: auto;
@@ -184,14 +184,41 @@ input[type="radio"] {
     flex-shrink: 0;
 }
 
-/* Footer styling */
+/* Footer Styling */
 footer {
     text-align: center;
+    padding: 10px 15px;
     margin-top: 0;
-    padding: 5px;
-    font-size: 0.9em;
-    color: #555;
-    width: 100%;
+    font-size: 0.85em;
+    color: #555555;
+    border-top: 1px solid #cccccc;
+}
+
+footer p {
+    margin: 0;
+    display: inline;
+}
+
+footer a {
+    color: #000000;
+    text-decoration: underline;
+    margin: 0 5px;
+}
+
+footer a:hover {
+    color: #808080;
+}
+
+/* Specific styling for the GitHub star link if needed, e.g., slightly bolder */
+footer a[href*="github.com"] {
+    font-weight: 600;
+    transition: transform 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+/* Hover effect for the GitHub star link */
+footer a[href*="github.com"]:hover {
+    transform: scale(1.2);
+    color: #000000;
 }
 
 /* Desktop layout (min-width: 768px) */

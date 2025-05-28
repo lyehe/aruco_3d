@@ -1,4 +1,6 @@
-# Online 3D-printable Calibration Targets Generator
+# Online 3D Marker Pattern Generator
+
+**Live Page:** [https://lyehe.github.io/aruco_3d/](https://lyehe.github.io/aruco_3d/)
 
 ## Description
 A web-based tool to generate 3D printable patterns for ArUco markers, ChArUco boards, and marker arrays. These calibration targets are commonly used in computer vision and robotics applications. The generator allows customization of marker parameters, dimensions, and export formats.
