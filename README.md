@@ -34,7 +34,7 @@ A web-based tool to generate 3D printable patterns for ArUco markers, ChArUco bo
 6.  Use the "Save White STL", "Save Black STL", or "Save Colored GLB" buttons to download the generated model parts.
 
 ## Acknowledgments
-Marker dictionaries used in this project are sourced from the `arucogen` project by okalachev, available at [https://github.com/okalachev/arucogen](https://github.com/okalachev/arucogen). The specific source for the dictionaries is [https://raw.githubusercontent.com/opencv/opencv_contrib/master/modules/aruco/src/predefined_dictionaries.hpp](https://raw.githubusercontent.com/opencv/opencv_contrib/master/modules/aruco/src/predefined_dictionaries.hpp), as referenced in the `arucogen` project.
+Marker dictionaries used in this project are sourced from the `arucogen` project by okalachev, available at [https://github.com/okalachev/arucogen](https://github.com/okalachev/arucogen). 
 
 ## License
 Copyright (c) [2025] [Yehe Liu]
