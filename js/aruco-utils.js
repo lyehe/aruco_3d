@@ -39,13 +39,13 @@ export function generateMarkerMesh(fullPattern, dimX, dimY, z1_baseThickness, z2
     const newMeshGroup = new THREE.Group();
 
     if (specialMarkerType === 'pureWhite' || specialMarkerType === 'pureBlack') {
-        let actual_z1 = z1_baseThickness;
-        let initial_actual_z2 = z2_featureThickness; // Store the original z2 request
+        // let actual_z1 = z1_baseThickness; // z1 is not used for thickness in flat mode for special markers
+        let initial_actual_z2 = z2_featureThickness; 
 
         if (extrusionType === "flat") {
             const flatSpecialMaterial = specialMarkerType === 'pureWhite' ? whiteMaterial : blackMaterial;
-            let flatThickness = Math.max(actual_z1, 1e-5);
-            if (flatThickness < 0.1) flatThickness = 0.1;
+            let flatThickness = Math.max(initial_actual_z2, 1e-5); // Use feature height (z2) for thickness
+            if (flatThickness < 0.1) flatThickness = 0.1; // Ensure minimum thickness
 
             const flatSpecialGeo = new THREE.BoxGeometry(dimX, dimY, flatThickness);
             flatSpecialGeo.translate(0, 0, flatThickness / 2);
@@ -71,23 +71,23 @@ export function generateMarkerMesh(fullPattern, dimX, dimY, z1_baseThickness, z2
             }
 
             // Handle the minimal thickness case (applies if z1 is zero and z2 is zero *or* z2 was suppressed)
-            if (actual_z1 < 1e-5 && final_actual_z2 < 1e-5) {
-                actual_z1 = 0.1;
+            if (z1_baseThickness < 1e-5 && final_actual_z2 < 1e-5) {
+                z1_baseThickness = 0.1;
                 // final_actual_z2 remains 0, as established by suppression or initial value
             }
 
 
             // Create Base plate (z1)
-            if (actual_z1 >= 1e-5) {
-                const basePlateGeo = new THREE.BoxGeometry(dimX, dimY, actual_z1);
-                basePlateGeo.translate(0, 0, actual_z1 / 2);
+            if (z1_baseThickness >= 1e-5) {
+                const basePlateGeo = new THREE.BoxGeometry(dimX, dimY, z1_baseThickness);
+                basePlateGeo.translate(0, 0, z1_baseThickness / 2);
                 newMeshGroup.add(new THREE.Mesh(basePlateGeo, baseMaterialForSpecial));
             }
 
             // Create Feature layer (z2) on top, if final_actual_z2 is significant
             if (final_actual_z2 >= 1e-5) {
                 const featureLayerGeo = new THREE.BoxGeometry(dimX, dimY, final_actual_z2);
-                const baseHeightForFeatureStack = (actual_z1 >= 1e-5) ? actual_z1 : 0;
+                const baseHeightForFeatureStack = (z1_baseThickness >= 1e-5) ? z1_baseThickness : 0;
                 featureLayerGeo.translate(0, 0, baseHeightForFeatureStack + final_actual_z2 / 2);
                 newMeshGroup.add(new THREE.Mesh(featureLayerGeo, intendedFeatureMaterialForSpecial));
             }
@@ -125,7 +125,7 @@ export function generateMarkerMesh(fullPattern, dimX, dimY, z1_baseThickness, z2
     }
 
     if (extrusionType === "flat") {
-        const flatCellThickness = Math.max(z1_baseThickness, 0.1);
+        const flatCellThickness = Math.max(z2_featureThickness, 0.1); // Use feature height (z2) for cell thickness
         for (let r = 0; r < numRowsTotal; r++) {
             for (let c = 0; c < numColsTotal; c++) {
                 const bit = fullPattern[r][c];
