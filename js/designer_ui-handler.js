@@ -389,7 +389,7 @@ function getColoredElementsFromSingle(sourceGroup, targetMaterial) {
     mainObjectGroup.traverse((object) => {
         if (object.isMesh && object.material === targetMaterial) {
             const newMesh = new THREE.Mesh(object.geometry.clone(), object.material);
-            newMesh.applyMatrix4(object.matrixWorld);
+            newMesh.geometry.applyMatrix4(object.matrixWorld); // Changed this line
             tempColorGroup.add(newMesh);
         }
     });
@@ -780,7 +780,7 @@ function getColoredElementsFromArray(sourceGroup, targetMaterial) {
     sourceGroup.traverse((object) => {
         if (object.isMesh && object.material === targetMaterial) {
             const newMesh = new THREE.Mesh(object.geometry.clone(), object.material);
-            newMesh.applyMatrix4(object.matrixWorld);
+            newMesh.geometry.applyMatrix4(object.matrixWorld); // Changed this line
             coloredGroup.add(newMesh);
         }
     });
@@ -1095,7 +1095,7 @@ function getColoredElementsFromCharuco(sourceGroup, targetMaterial) {
     sourceGroup.traverse((object) => {
         if (object.isMesh && object.material === targetMaterial) {
             const newMesh = new THREE.Mesh(object.geometry.clone(), object.material);
-            newMesh.applyMatrix4(object.matrixWorld);
+            newMesh.geometry.applyMatrix4(object.matrixWorld); // Changed this line
             coloredGroup.add(newMesh);
         }
     });
