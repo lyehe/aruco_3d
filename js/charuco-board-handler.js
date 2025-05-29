@@ -1,11 +1,12 @@
-import { generateMarkerMesh, getArucoBitPattern } from './aruco-utils.js';
+import { generateMarkerMesh, getArucoBitPattern, validateMarkerId, MIN_THICKNESS } from './aruco-utils.js';
 import { blackMaterial, whiteMaterial } from './config.js';
 import { getMaxIdFromSelect } from './ui-common-utils.js';
+import { mergeAndDisposeGeometries, createBoxAt, validateDimensions } from './geometry-utils.js';
 
 let uiElements_charuco;
 let dictionaryData_charuco;
 let mainObjectGroup_charuco;
-let onUpdateCallbacks_charuco; // { clearScene, setSaveDisabled, setInfoMessage }
+let onUpdateCallbacks_charuco;
 
 export function initCharucoUI(uiElements, dict, mainGroup, onUpdate) {
     uiElements_charuco = uiElements;
@@ -13,27 +14,127 @@ export function initCharucoUI(uiElements, dict, mainGroup, onUpdate) {
     mainObjectGroup_charuco = mainGroup;
     onUpdateCallbacks_charuco = onUpdate;
 
-    uiElements_charuco.selects.charuco.dict.addEventListener('change', () => { prefillCharucoIds(); });
-    uiElements_charuco.inputs.charuco.squaresX.addEventListener('input', () => { prefillCharucoIds(); });
-    uiElements_charuco.inputs.charuco.squaresY.addEventListener('input', () => { prefillCharucoIds(); });
-    uiElements_charuco.inputs.charuco.squareSize.addEventListener('input', updateCharucoBoard);
-    uiElements_charuco.inputs.charuco.markerMargin.addEventListener('input', updateCharucoBoard);
-    uiElements_charuco.radios.charuco.firstSquare.forEach(radio => radio.addEventListener('change', () => { prefillCharucoIds(); }));
-    uiElements_charuco.textareas.charuco.ids.addEventListener('input', updateCharucoBoard);
+    // Event listeners
+    const prefillTriggers = [
+        uiElements_charuco.selects.charuco.dict,
+        uiElements_charuco.inputs.charuco.squaresX,
+        uiElements_charuco.inputs.charuco.squaresY
+    ];
+
+    prefillTriggers.forEach(element => {
+        if (element) element.addEventListener('change', prefillCharucoIds);
+    });
+
+    uiElements_charuco.radios.charuco.firstSquare.forEach(radio =>
+        radio.addEventListener('change', prefillCharucoIds)
+    );
+
+    const updateTriggers = [
+        uiElements_charuco.inputs.charuco.squareSize,
+        uiElements_charuco.inputs.charuco.markerMargin,
+        uiElements_charuco.textareas.charuco.ids,
+        uiElements_charuco.inputs.charuco.z1,
+        uiElements_charuco.inputs.charuco.z2
+    ];
+
+    updateTriggers.forEach(element => {
+        if (element) element.addEventListener('input', updateCharucoBoard);
+    });
+
     uiElements_charuco.buttons.charuco_refillIds.addEventListener('click', prefillCharucoIds);
     uiElements_charuco.buttons.charuco_randomizeIds.addEventListener('click', randomizeCharucoIds);
-    uiElements_charuco.inputs.charuco.z1.addEventListener('input', updateCharucoBoard);
-    uiElements_charuco.inputs.charuco.z2.addEventListener('input', updateCharucoBoard);
-    uiElements_charuco.radios.charuco.extrusion.forEach(radio => radio.addEventListener('change', updateCharucoBoard));
-    // startId event listener is implicit
+
+    uiElements_charuco.radios.charuco.extrusion.forEach(radio =>
+        radio.addEventListener('change', updateCharucoBoard)
+    );
 }
 
-function determineIsWhiteSquare(r, c, firstSquareColor) {
-    if (firstSquareColor === 'white') {
-        return (r % 2 === c % 2);
-    } else { // black
-        return (r % 2 !== c % 2);
+function getCharucoParameters() {
+    return {
+        squaresX: Number(uiElements_charuco.inputs.charuco.squaresX.value),
+        squaresY: Number(uiElements_charuco.inputs.charuco.squaresY.value),
+        squareSize: Number(uiElements_charuco.inputs.charuco.squareSize.value),
+        markerMargin: Number(uiElements_charuco.inputs.charuco.markerMargin.value),
+        markerIdsRaw: uiElements_charuco.textareas.charuco.ids.value
+            .split(',')
+            .map(s => s.trim())
+            .filter(s => s !== ''),
+        z1: Number(uiElements_charuco.inputs.charuco.z1.value),
+        z2: Number(uiElements_charuco.inputs.charuco.z2.value),
+        extrusionType: document.querySelector('input[name="charuco_extrusion"]:checked').value,
+        firstSquareColor: document.querySelector('input[name="charuco_firstSquare"]:checked').value
+    };
+}
+
+function getDictionaryInfo() {
+    const selectedDictElement = uiElements_charuco.selects.charuco.dict;
+    const option = selectedDictElement.options[selectedDictElement.selectedIndex];
+
+    return {
+        name: option.value,
+        patternWidth: Number(option.getAttribute('data-width')),
+        patternHeight: Number(option.getAttribute('data-height')),
+        maxId: getMaxIdFromSelect(selectedDictElement, dictionaryData_charuco)
+    };
+}
+
+function validateCharucoParameters(params, dictInfo) {
+    const errors = [];
+
+    // Basic dimension validation
+    if (params.squareSize <= 0) {
+        errors.push('Square size must be positive');
     }
+
+    if (params.z1 < 0) {
+        errors.push('Base height (z1) must be non-negative');
+    }
+
+    if (params.extrusionType !== 'flat' && params.z2 < MIN_THICKNESS) {
+        errors.push('Feature height (z2) must be positive for non-flat boards');
+    }
+
+    // Marker margin validation
+    if (params.markerMargin < 0 || params.markerMargin * 2 >= params.squareSize) {
+        errors.push('Marker margin must be non-negative and less than half the square size');
+    }
+
+    // Calculate derived values
+    const markerDim = params.squareSize - (2 * params.markerMargin);
+    const numWhiteSquares = calculateNumWhiteSquares(
+        params.squaresX,
+        params.squaresY,
+        params.firstSquareColor
+    );
+
+    if (markerDim <= 0 && numWhiteSquares > 0) {
+        errors.push('Marker dimension (after margin) must be positive');
+    }
+
+    // ID validation
+    if (params.markerIdsRaw.length !== numWhiteSquares) {
+        errors.push(`Number of IDs (${params.markerIdsRaw.length}) does not match white squares (${numWhiteSquares})`);
+        return errors;
+    }
+
+    // Validate each ID
+    if (numWhiteSquares > 0) {
+        const markerIds = params.markerIdsRaw.map(Number);
+        for (const id of markerIds) {
+            const validation = validateMarkerId(dictInfo.name, id, dictInfo.maxId);
+            if (!validation.valid) {
+                errors.push(validation.error);
+                break;
+            }
+        }
+    }
+
+    return errors;
+}
+
+function determineIsWhiteSquare(row, col, firstSquareColor) {
+    const isEvenPosition = (row % 2 === col % 2);
+    return firstSquareColor === 'white' ? isEvenPosition : !isEvenPosition;
 }
 
 function calculateNumWhiteSquares(squaresX, squaresY, firstSquareColor) {
@@ -55,277 +156,291 @@ export function updateCharucoBoard() {
         onUpdateCallbacks_charuco.setInfoMessage('Error: Dictionary loading or failed.');
         return;
     }
+
     onUpdateCallbacks_charuco.clearScene();
 
-    const squaresX = Number(uiElements_charuco.inputs.charuco.squaresX.value);
-    const squaresY = Number(uiElements_charuco.inputs.charuco.squaresY.value);
-    const squareSize = Number(uiElements_charuco.inputs.charuco.squareSize.value);
-    const markerMargin = Number(uiElements_charuco.inputs.charuco.markerMargin.value);
-    const markerIdsRaw = uiElements_charuco.textareas.charuco.ids.value.split(',').map(s => s.trim()).filter(s => s !== '');
-    const z1_base_board = Number(uiElements_charuco.inputs.charuco.z1.value);
-    const z2_feature_board = Number(uiElements_charuco.inputs.charuco.z2.value);
-    const extrusionType = document.querySelector('input[name="charuco_extrusion"]:checked').value;
-    const firstSquareColor = document.querySelector('input[name="charuco_firstSquare"]:checked').value;
+    // Get parameters
+    const params = getCharucoParameters();
+    const dictInfo = getDictionaryInfo();
 
-    const selectedDictElement = uiElements_charuco.selects.charuco.dict;
-    const option = selectedDictElement.options[selectedDictElement.selectedIndex];
-    const dictName = option.value;
-    const patternWidth = Number(option.getAttribute('data-width'));
-    const patternHeight = Number(option.getAttribute('data-height'));
-    const maxId = getMaxIdFromSelect(selectedDictElement, dictionaryData_charuco);
-    uiElements_charuco.inputs.charuco.startId.setAttribute('max', maxId);
+    // Update max ID
+    uiElements_charuco.inputs.charuco.startId.setAttribute('max', dictInfo.maxId);
 
-    if (squareSize <= 0 || z1_base_board < 0 || (extrusionType !== "flat" && z2_feature_board < 1e-5)) {
+    // Validate
+    const errors = validateCharucoParameters(params, dictInfo);
+    if (errors.length > 0) {
         onUpdateCallbacks_charuco.setSaveDisabled(true);
-        onUpdateCallbacks_charuco.setInfoMessage('Board dimensions must be positive. Base height (z1) must be non-negative. Feature height (z2) must be positive for non-flat extrusions.');
-        return;
-    }
-    if (extrusionType === "flat" && z1_base_board < 0) {
-        onUpdateCallbacks_charuco.setSaveDisabled(true);
-        onUpdateCallbacks_charuco.setInfoMessage('Base height (z1) must be non-negative for flat boards.');
-        return;
-    }
-    if (markerMargin < 0 || markerMargin * 2 >= squareSize) {
-        onUpdateCallbacks_charuco.setSaveDisabled(true);
-        onUpdateCallbacks_charuco.setInfoMessage('Marker margin must be non-negative and less than half the square size.');
-        return;
-    }
-    const markerDim = squareSize - (2 * markerMargin);
-    const numWhiteSquares = calculateNumWhiteSquares(squaresX, squaresY, firstSquareColor);
-    if (markerDim <= 0 && numWhiteSquares > 0) {
-        onUpdateCallbacks_charuco.setSaveDisabled(true);
-        onUpdateCallbacks_charuco.setInfoMessage('Marker dimension (derived) must be positive when markers are present.');
-        return;
-    }
-    if (markerIdsRaw.length !== numWhiteSquares) {
-        onUpdateCallbacks_charuco.setSaveDisabled(true);
-        onUpdateCallbacks_charuco.setInfoMessage(`Error: Number of IDs (${markerIdsRaw.length}) does not match white squares (${numWhiteSquares}).`);
-        return;
-    }
-    const markerIds = markerIdsRaw.map(Number);
-    let invalidIdFound = false;
-    if (numWhiteSquares > 0) {
-        for (const id of markerIds) {
-            if (isNaN(id) || id < 0 || id > maxId || !dictionaryData_charuco[dictName] || !dictionaryData_charuco[dictName][id]) {
-                onUpdateCallbacks_charuco.setInfoMessage(`Error: Invalid ArUco ID (ID: ${id}, Max: ${maxId} for ${dictName}).`);
-                invalidIdFound = true; break;
-            }
-        }
-    }
-    if (invalidIdFound) {
-        onUpdateCallbacks_charuco.setSaveDisabled(true);
+        onUpdateCallbacks_charuco.setInfoMessage(errors[0]);
         return;
     }
 
-    onUpdateCallbacks_charuco.setInfoMessage('');
-    onUpdateCallbacks_charuco.setSaveDisabled(false);
+    // Generate board
+    try {
+        generateCharucoBoard(params, dictInfo);
 
-    let markerIdCounter = 0;
-    const boardTotalWidth = squaresX * squareSize;
-    const boardTotalHeight = squaresY * squareSize;
+        // Update UI
+        const totalZ = params.extrusionType === "flat" ?
+            Math.max(params.z2, MIN_THICKNESS) :
+            params.z1 + params.z2;
 
-    if (extrusionType !== "flat" && z1_base_board >= 1e-5) {
-        const basePlateMaterial = (extrusionType === "positive") ? whiteMaterial : blackMaterial;
-        const boardBaseGeo = new THREE.BoxGeometry(boardTotalWidth, boardTotalHeight, z1_base_board);
-        boardBaseGeo.translate(0, 0, z1_base_board / 2);
-        const boardBaseMesh = new THREE.Mesh(boardBaseGeo, basePlateMaterial);
-        boardBaseMesh.name = "charuco_base_plate";
-        mainObjectGroup_charuco.add(boardBaseMesh);
-    }
+        const numWhiteSquares = calculateNumWhiteSquares(
+            params.squaresX,
+            params.squaresY,
+            params.firstSquareColor
+        );
 
-    const flatPieceThickness = (extrusionType === "flat") ? Math.max(z2_feature_board, 0.1) : Math.max(z1_base_board, 0.1);
-    const flatPieceZOffset = flatPieceThickness / 2;
+        onUpdateCallbacks_charuco.setInfoMessage(
+            `ChArUco: ${params.squaresX}x${params.squaresY}, ` +
+            `First: ${params.firstSquareColor}. ` +
+            `Total Z: ${totalZ.toFixed(2)}mm. ` +
+            `Markers: ${numWhiteSquares}`
+        );
+        onUpdateCallbacks_charuco.setSaveDisabled(false);
 
-    for (let r_grid = 0; r_grid < squaresY; r_grid++) {
-        for (let c_grid = 0; c_grid < squaresX; c_grid++) {
-            const isWhiteSq = determineIsWhiteSquare(r_grid, c_grid, firstSquareColor);
-            const squareCenterX = c_grid * squareSize - boardTotalWidth / 2 + squareSize / 2;
-            const squareCenterY = -(r_grid * squareSize - boardTotalHeight / 2 + squareSize / 2);
-
-            if (extrusionType === "flat") {
-                if (isWhiteSq) {
-                    const markerIdNum = markerIds[markerIdCounter++];
-                    const fullPattern = getArucoBitPattern(dictName, markerIdNum, patternWidth, patternHeight);
-                    if (markerMargin > 1e-5) {
-                        const marginGeometries = [];
-                        marginGeometries.push(new THREE.BoxGeometry(squareSize, markerMargin, flatPieceThickness).translate(0, (squareSize/2) - (markerMargin/2), 0));
-                        marginGeometries.push(new THREE.BoxGeometry(squareSize, markerMargin, flatPieceThickness).translate(0, -(squareSize/2) + (markerMargin/2), 0));
-                        marginGeometries.push(new THREE.BoxGeometry(markerMargin, markerDim, flatPieceThickness).translate(-(squareSize/2) + (markerMargin/2), 0, 0));
-                        marginGeometries.push(new THREE.BoxGeometry(markerMargin, markerDim, flatPieceThickness).translate((squareSize/2) - (markerMargin/2), 0, 0));
-                        if (marginGeometries.length > 0) {
-                            const mergedMarginGeo = THREE.BufferGeometryUtils.mergeBufferGeometries(marginGeometries);
-                            if (mergedMarginGeo) {
-                                mergedMarginGeo.translate(0, 0, flatPieceZOffset); // Apply Z offset after merge
-                                const marginMesh = new THREE.Mesh(mergedMarginGeo, whiteMaterial);
-                                marginMesh.position.set(squareCenterX, squareCenterY, 0); 
-                                marginMesh.name = `flat_white_margin_${r_grid}_${c_grid}`;
-                                mainObjectGroup_charuco.add(marginMesh);
-                            }
-                        }
-                    }
-                    const markerMeshGroup = generateMarkerMesh(fullPattern, markerDim, markerDim, flatPieceThickness, 1e-5, "flat", null);
-                    markerMeshGroup.position.set(squareCenterX, squareCenterY, 0); 
-                    markerMeshGroup.name = `marker_flat_${markerIdNum}`;
-                    mainObjectGroup_charuco.add(markerMeshGroup);
-                } else {
-                    const blackSquareGeo = new THREE.BoxGeometry(squareSize, squareSize, flatPieceThickness);
-                    blackSquareGeo.translate(0, 0, flatPieceZOffset);
-                    const blackSquareMesh = new THREE.Mesh(blackSquareGeo, blackMaterial);
-                    blackSquareMesh.position.set(squareCenterX, squareCenterY, 0);
-                    blackSquareMesh.name = `flat_black_square_${r_grid}_${c_grid}`;
-                    mainObjectGroup_charuco.add(blackSquareMesh);
-                }
-            } else if (extrusionType === "positive") {
-                if (!isWhiteSq) {
-                    const blackSquareGeo = new THREE.BoxGeometry(squareSize, squareSize, z2_feature_board);
-                    blackSquareGeo.translate(squareCenterX, squareCenterY, z1_base_board + z2_feature_board / 2);
-                    const blackSquareMesh = new THREE.Mesh(blackSquareGeo, blackMaterial);
-                    blackSquareMesh.name = `positive_black_square_${r_grid}_${c_grid}`;
-                    mainObjectGroup_charuco.add(blackSquareMesh);
-                }
-                if (isWhiteSq) {
-                    const markerIdNum = markerIds[markerIdCounter++];
-                    const fullPattern = getArucoBitPattern(dictName, markerIdNum, patternWidth, patternHeight);
-                    const markerMeshGroup = generateMarkerMesh(fullPattern, markerDim, markerDim, 0, z2_feature_board, "positive", null);
-                    markerMeshGroup.position.set(squareCenterX, squareCenterY, z1_base_board); 
-                    markerMeshGroup.name = `marker_positive_${markerIdNum}`;
-                    mainObjectGroup_charuco.add(markerMeshGroup);
-                }
-            } else { // extrusionType === "negative"
-                if (isWhiteSq) {
-                    const markerIdNum = markerIds[markerIdCounter++];
-                    const fullPattern = getArucoBitPattern(dictName, markerIdNum, patternWidth, patternHeight);
-                    if (markerMargin > 1e-5) {
-                        const marginGeometriesN = [];
-                        marginGeometriesN.push(new THREE.BoxGeometry(squareSize, markerMargin, z2_feature_board).translate(0, (squareSize/2) - (markerMargin/2), 0));
-                        marginGeometriesN.push(new THREE.BoxGeometry(squareSize, markerMargin, z2_feature_board).translate(0, -(squareSize/2) + (markerMargin/2), 0));
-                        marginGeometriesN.push(new THREE.BoxGeometry(markerMargin, markerDim, z2_feature_board).translate(-(squareSize/2) + (markerMargin/2), 0, 0));
-                        marginGeometriesN.push(new THREE.BoxGeometry(markerMargin, markerDim, z2_feature_board).translate((squareSize/2) - (markerMargin/2), 0, 0));
-                        if (marginGeometriesN.length > 0) {
-                            const mergedMarginGeoN = THREE.BufferGeometryUtils.mergeBufferGeometries(marginGeometriesN);
-                            if (mergedMarginGeoN) {
-                                const marginMeshN = new THREE.Mesh(mergedMarginGeoN, whiteMaterial);
-                                marginMeshN.position.set(squareCenterX, squareCenterY, z1_base_board + z2_feature_board / 2);
-                                marginMeshN.name = `negative_white_margin_${r_grid}_${c_grid}`;
-                                mainObjectGroup_charuco.add(marginMeshN);
-                            }
-                        }
-                    }
-                    const markerMeshGroup = generateMarkerMesh(fullPattern, markerDim, markerDim, 0, z2_feature_board, "negative", null);
-                    markerMeshGroup.position.set(squareCenterX, squareCenterY, z1_base_board); 
-                    markerMeshGroup.name = `marker_negative_${markerIdNum}`;
-                    mainObjectGroup_charuco.add(markerMeshGroup);
-                } else { 
-                    if (z1_base_board < 1e-5) { 
-                        const blackSquareActualHeight = Math.max(z2_feature_board, 0.1); 
-                        const blackSquareGeo = new THREE.BoxGeometry(squareSize, squareSize, blackSquareActualHeight);
-                        blackSquareGeo.translate(0,0, blackSquareActualHeight / 2); 
-                        const blackSquareMesh = new THREE.Mesh(blackSquareGeo, blackMaterial);
-                        blackSquareMesh.position.set(squareCenterX, squareCenterY, 0); 
-                        blackSquareMesh.name = `negative_black_square_explicit_${r_grid}_${c_grid}`;
-                        mainObjectGroup_charuco.add(blackSquareMesh);
-                    }
-                }
-            }
-        }
-    }
-
-    if (mainObjectGroup_charuco.children.length > 0) {
-        mainObjectGroup_charuco.updateMatrixWorld(true);
-        let currentFileNameTotalZ;
-        if (extrusionType === "flat") {
-            currentFileNameTotalZ = Math.max(z2_feature_board, 0.1);
-        } else {
-            currentFileNameTotalZ = z1_base_board + z2_feature_board;
-        }
-        onUpdateCallbacks_charuco.setInfoMessage(`ChArUco: ${squaresX}x${squaresY}, First: ${firstSquareColor}. Total Z: ${currentFileNameTotalZ.toFixed(2)}mm. Markers: ${markerIds.length}`);
-    } else {
-        onUpdateCallbacks_charuco.setInfoMessage('No ChArUco board generated.');
+    } catch (error) {
+        console.error("Error generating ChArUco board:", error);
         onUpdateCallbacks_charuco.setSaveDisabled(true);
+        onUpdateCallbacks_charuco.setInfoMessage('Error generating board');
     }
 }
 
-export function prefillCharucoIds() { 
-    const squaresX = Number(uiElements_charuco.inputs.charuco.squaresX.value);
-    const squaresY = Number(uiElements_charuco.inputs.charuco.squaresY.value);
-    const firstSquareColor = document.querySelector('input[name="charuco_firstSquare"]:checked').value;
-    const numWhiteSquares = calculateNumWhiteSquares(squaresX, squaresY, firstSquareColor);
+function generateCharucoBoard(params, dictInfo) {
+    const markerIds = params.markerIdsRaw.map(Number);
+    const markerDim = params.squareSize - (2 * params.markerMargin);
+    const boardWidth = params.squaresX * params.squareSize;
+    const boardHeight = params.squaresY * params.squareSize;
+
+    let markerIdIndex = 0;
+
+    // Create base plate for non-flat extrusions
+    if (params.extrusionType !== "flat" && params.z1 >= MIN_THICKNESS) {
+        const baseMaterial = params.extrusionType === "positive" ? whiteMaterial : blackMaterial;
+        const baseGeo = createBoxAt(boardWidth, boardHeight, params.z1, 0, 0, params.z1 / 2);
+        const baseMesh = new THREE.Mesh(baseGeo, baseMaterial);
+        baseMesh.name = "charuco_base_plate";
+        mainObjectGroup_charuco.add(baseMesh);
+    }
+
+    // Generate squares
+    for (let row = 0; row < params.squaresY; row++) {
+        for (let col = 0; col < params.squaresX; col++) {
+            const isWhite = determineIsWhiteSquare(row, col, params.firstSquareColor);
+            const squareCenterX = col * params.squareSize - boardWidth / 2 + params.squareSize / 2;
+            const squareCenterY = -(row * params.squareSize - boardHeight / 2 + params.squareSize / 2);
+
+            if (params.extrusionType === "flat") {
+                generateFlatSquare(params, dictInfo, isWhite, squareCenterX, squareCenterY,
+                    markerIds, markerIdIndex, markerDim, row, col);
+                if (isWhite) markerIdIndex++;
+            } else {
+                generateExtrudedSquare(params, dictInfo, isWhite, squareCenterX, squareCenterY,
+                    markerIds, markerIdIndex, markerDim, row, col);
+                if (isWhite) markerIdIndex++;
+            }
+        }
+    }
+}
+function generateFlatSquare(params, dictInfo, isWhite, centerX, centerY,
+    markerIds, markerIndex, markerDim, row, col) {
+    const thickness = Math.max(params.z2, MIN_THICKNESS);
+
+    if (isWhite) {
+        // White square with marker
+        const markerId = markerIds[markerIndex];
+
+        // Generate margin if needed
+        if (params.markerMargin > MIN_THICKNESS) {
+            const marginGeometries = [
+                createBoxAt(params.squareSize, params.markerMargin, thickness,
+                    0, (params.squareSize / 2) - (params.markerMargin / 2), thickness / 2),
+                createBoxAt(params.squareSize, params.markerMargin, thickness,
+                    0, -(params.squareSize / 2) + (params.markerMargin / 2), thickness / 2),
+                createBoxAt(params.markerMargin, markerDim, thickness,
+                    -(params.squareSize / 2) + (params.markerMargin / 2), 0, thickness / 2),
+                createBoxAt(params.markerMargin, markerDim, thickness,
+                    (params.squareSize / 2) - (params.markerMargin / 2), 0, thickness / 2)
+            ];
+
+            const marginMesh = mergeAndDisposeGeometries(marginGeometries, whiteMaterial);
+            if (marginMesh) {
+                marginMesh.position.set(centerX, centerY, 0);
+                marginMesh.name = `flat_white_margin_${row}_${col}`;
+                mainObjectGroup_charuco.add(marginMesh);
+            }
+        }
+
+        // Generate marker
+        // IMPORTANT: For flat mode, pass 0 as z1 and thickness as z2
+        const fullPattern = getArucoBitPattern(dictInfo.name, markerId,
+            dictInfo.patternWidth, dictInfo.patternHeight);
+        const markerGroup = generateMarkerMesh(fullPattern, markerDim, markerDim,
+            0, thickness, "flat", null);
+        markerGroup.position.set(centerX, centerY, 0);
+        markerGroup.name = `marker_flat_${markerId}`;
+        mainObjectGroup_charuco.add(markerGroup);
+
+    } else {
+        // Black square
+        const blackGeo = createBoxAt(params.squareSize, params.squareSize, thickness,
+            0, 0, thickness / 2);
+        const blackMesh = new THREE.Mesh(blackGeo, blackMaterial);
+        blackMesh.position.set(centerX, centerY, 0);
+        blackMesh.name = `flat_black_square_${row}_${col}`;
+        mainObjectGroup_charuco.add(blackMesh);
+    }
+}
+
+function generateExtrudedSquare(params, dictInfo, isWhite, centerX, centerY,
+    markerIds, markerIndex, markerDim, row, col) {
+    if (params.extrusionType === "positive") {
+        if (!isWhite) {
+            // Black squares are raised in positive mode
+            const blackGeo = createBoxAt(params.squareSize, params.squareSize, params.z2,
+                centerX, centerY, params.z1 + params.z2 / 2);
+            const blackMesh = new THREE.Mesh(blackGeo, blackMaterial);
+            blackMesh.name = `positive_black_square_${row}_${col}`;
+            mainObjectGroup_charuco.add(blackMesh);
+        } else {
+            // White square with marker
+            const markerId = markerIds[markerIndex];
+            const fullPattern = getArucoBitPattern(dictInfo.name, markerId,
+                dictInfo.patternWidth, dictInfo.patternHeight);
+            const markerGroup = generateMarkerMesh(fullPattern, markerDim, markerDim,
+                0, params.z2, "positive", null);
+            markerGroup.position.set(centerX, centerY, params.z1);
+            markerGroup.name = `marker_positive_${markerId}`;
+            mainObjectGroup_charuco.add(markerGroup);
+        }
+    } else { // negative
+        if (isWhite) {
+            // White squares with markers
+            const markerId = markerIds[markerIndex];
+
+            // Generate margin if needed
+            if (params.markerMargin > MIN_THICKNESS) {
+                const marginGeometries = [
+                    createBoxAt(params.squareSize, params.markerMargin, params.z2,
+                        0, (params.squareSize / 2) - (params.markerMargin / 2), 0),
+                    createBoxAt(params.squareSize, params.markerMargin, params.z2,
+                        0, -(params.squareSize / 2) + (params.markerMargin / 2), 0),
+                    createBoxAt(params.markerMargin, markerDim, params.z2,
+                        -(params.squareSize / 2) + (params.markerMargin / 2), 0, 0),
+                    createBoxAt(params.markerMargin, markerDim, params.z2,
+                        (params.squareSize / 2) - (params.markerMargin / 2), 0, 0)
+                ];
+
+                const marginMesh = mergeAndDisposeGeometries(marginGeometries, whiteMaterial);
+                if (marginMesh) {
+                    marginMesh.position.set(centerX, centerY, params.z1 + params.z2 / 2);
+                    marginMesh.name = `negative_white_margin_${row}_${col}`;
+                    mainObjectGroup_charuco.add(marginMesh);
+                }
+            }
+
+            // Generate marker
+            const fullPattern = getArucoBitPattern(dictInfo.name, markerId,
+                dictInfo.patternWidth, dictInfo.patternHeight);
+            const markerGroup = generateMarkerMesh(fullPattern, markerDim, markerDim,
+                0, params.z2, "negative", null);
+            markerGroup.position.set(centerX, centerY, params.z1);
+            markerGroup.name = `marker_negative_${markerId}`;
+            mainObjectGroup_charuco.add(markerGroup);
+
+        } else if (params.z1 < MIN_THICKNESS) {
+            // Black squares need explicit geometry when no base plate
+            const blackHeight = Math.max(params.z2, MIN_THICKNESS);
+            const blackGeo = createBoxAt(params.squareSize, params.squareSize, blackHeight,
+                0, 0, blackHeight / 2);
+            const blackMesh = new THREE.Mesh(blackGeo, blackMaterial);
+            blackMesh.position.set(centerX, centerY, 0);
+            blackMesh.name = `negative_black_square_explicit_${row}_${col}`;
+            mainObjectGroup_charuco.add(blackMesh);
+        }
+    }
+}
+
+export function prefillCharucoIds() {
+    const params = getCharucoParameters();
+    const dictInfo = getDictionaryInfo();
+    const numWhiteSquares = calculateNumWhiteSquares(
+        params.squaresX,
+        params.squaresY,
+        params.firstSquareColor
+    );
     const startId = Number(uiElements_charuco.inputs.charuco.startId.value);
-    const selectedDictElement = uiElements_charuco.selects.charuco.dict;
-    const option = selectedDictElement.options[selectedDictElement.selectedIndex];
-    const dictName = option.value;
-    const maxId = getMaxIdFromSelect(selectedDictElement, dictionaryData_charuco);
 
     const ids = [];
     if (numWhiteSquares > 0) {
         for (let i = 0; i < numWhiteSquares; i++) {
             let currentId = startId + i;
-            if (currentId > maxId) {
-                console.warn(`Requested ID ${currentId} exceeds max ID ${maxId} for ${dictName}. Capping.`);
-                currentId = maxId;
+            if (currentId > dictInfo.maxId) {
+                console.warn(`ID ${currentId} exceeds max ID ${dictInfo.maxId}. Capping.`);
+                currentId = dictInfo.maxId;
             }
             ids.push(currentId);
         }
     }
+
     uiElements_charuco.textareas.charuco.ids.value = ids.join(',');
-    updateCharucoBoard(); 
+    updateCharucoBoard();
 }
 
-export function randomizeCharucoIds() { 
-    const squaresX = Number(uiElements_charuco.inputs.charuco.squaresX.value);
-    const squaresY = Number(uiElements_charuco.inputs.charuco.squaresY.value);
-    const firstSquareColor = document.querySelector('input[name="charuco_firstSquare"]:checked').value;
-    const numWhiteSquares = calculateNumWhiteSquares(squaresX, squaresY, firstSquareColor);
-    const selectedDictElement = uiElements_charuco.selects.charuco.dict;
-    const option = selectedDictElement.options[selectedDictElement.selectedIndex];
-    const dictName = option.value;
-    const maxId = getMaxIdFromSelect(selectedDictElement, dictionaryData_charuco);
+export function randomizeCharucoIds() {
+    const params = getCharucoParameters();
+    const dictInfo = getDictionaryInfo();
+    const numWhiteSquares = calculateNumWhiteSquares(
+        params.squaresX,
+        params.squaresY,
+        params.firstSquareColor
+    );
 
-    if (numWhiteSquares > (maxId + 1) && numWhiteSquares > 0) {
-        onUpdateCallbacks_charuco.setInfoMessage(`Error: Cannot pick ${numWhiteSquares} unique IDs from pool of ${maxId + 1}.`);
-        return;
-    }
     if (numWhiteSquares === 0) {
         uiElements_charuco.textareas.charuco.ids.value = '';
         updateCharucoBoard();
         return;
     }
 
+    if (numWhiteSquares > (dictInfo.maxId + 1)) {
+        onUpdateCallbacks_charuco.setInfoMessage(
+            `Error: Cannot pick ${numWhiteSquares} unique IDs from pool of ${dictInfo.maxId + 1}.`
+        );
+        return;
+    }
+
+    // Create pool and shuffle
     const availableIds = [];
-    for (let i = 0; i <= maxId; i++) availableIds.push(i);
+    for (let i = 0; i <= dictInfo.maxId; i++) {
+        availableIds.push(i);
+    }
+
+    // Fisher-Yates shuffle
     for (let i = availableIds.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [availableIds[i], availableIds[j]] = [availableIds[j], availableIds[i]];
     }
+
     uiElements_charuco.textareas.charuco.ids.value = availableIds.slice(0, numWhiteSquares).join(',');
-    updateCharucoBoard(); 
+    updateCharucoBoard();
 }
 
 export function getCharucoBaseFilename() {
-    const squaresX = Number(uiElements_charuco.inputs.charuco.squaresX.value);
-    const squaresY = Number(uiElements_charuco.inputs.charuco.squaresY.value);
-    const squareSize = Number(uiElements_charuco.inputs.charuco.squareSize.value);
-    const markerMargin = Number(uiElements_charuco.inputs.charuco.markerMargin.value);
-    const z1_base_val = Number(uiElements_charuco.inputs.charuco.z1.value);
-    const z2_feature_val = Number(uiElements_charuco.inputs.charuco.z2.value);
-    const extrusionType = document.querySelector('input[name="charuco_extrusion"]:checked').value;
-    const selectedDictElement = uiElements_charuco.selects.charuco.dict;
-    const dictName = selectedDictElement.options[selectedDictElement.selectedIndex].value;
-    const markerDimVal = squareSize - (2 * markerMargin);
-    const firstSquareColor = document.querySelector('input[name="charuco_firstSquare"]:checked').value;
+    const params = getCharucoParameters();
+    const dictInfo = getDictionaryInfo();
+    const markerDim = params.squareSize - (2 * params.markerMargin);
 
-    let fileNameTotalZ;
-    if (extrusionType === "flat") {
-        fileNameTotalZ = Math.max(z2_feature_val, 0.1);
-    } else {
-        fileNameTotalZ = z1_base_val + z2_feature_val;
-    }
-    return `${dictName}_charuco-${squaresX}x${squaresY}_${firstSquareColor}Start_sq${squareSize}mm_mrg${markerMargin}mm_mdim${markerDimVal.toFixed(1)}mm_${extrusionType}_z${fileNameTotalZ.toFixed(2)}mm`;
+    const totalZ = params.extrusionType === "flat" ?
+        Math.max(params.z2, MIN_THICKNESS) :
+        params.z1 + params.z2;
+
+    return `${dictInfo.name}_charuco-${params.squaresX}x${params.squaresY}_` +
+        `${params.firstSquareColor}Start_sq${params.squareSize}mm_` +
+        `mrg${params.markerMargin}mm_mdim${markerDim.toFixed(1)}mm_` +
+        `${params.extrusionType}_z${totalZ.toFixed(2)}mm`;
 }
 
 export function getColoredElementsFromCharuco(targetMaterial) {
     const coloredGroup = new THREE.Group();
-    if (!mainObjectGroup_charuco) return coloredGroup;
+
     mainObjectGroup_charuco.traverse((object) => {
         if (object.isMesh && object.material === targetMaterial) {
             const newMesh = new THREE.Mesh(object.geometry.clone(), object.material);
@@ -333,5 +448,100 @@ export function getColoredElementsFromCharuco(targetMaterial) {
             coloredGroup.add(newMesh);
         }
     });
+
     return coloredGroup;
-} 
+}
+export function getCharucoMetadataExport() {
+    const params = getCharucoParameters();
+    const dictInfo = getDictionaryInfo();
+    const markerIds = params.markerIdsRaw.map(Number);
+    const markerDim = params.squareSize - (2 * params.markerMargin);
+
+    const totalZ = params.extrusionType === "flat" ?
+        Math.max(params.z2, MIN_THICKNESS) :
+        params.z1 + params.z2;
+
+    const boardWidth = params.squaresX * params.squareSize;
+    const boardHeight = params.squaresY * params.squareSize;
+
+    const metadata = {
+        timestamp: new Date().toISOString(),
+        mode: 'charuco',
+        setup: {
+            dictionary: dictInfo.name,
+            squaresX: params.squaresX,
+            squaresY: params.squaresY,
+            squareSize: params.squareSize,
+            markerMargin: params.markerMargin,
+            markerDimension: markerDim,
+            firstSquareColor: params.firstSquareColor,
+            z1_baseHeight: params.z1,
+            z2_featureHeight: params.z2,
+            totalHeight: totalZ,
+            extrusionType: params.extrusionType,
+            boardWidth: boardWidth,
+            boardHeight: boardHeight,
+            units: 'mm'
+        },
+        markers: [],
+        checkerboardCorners: [],
+        calibrationPoints: {
+            boardCorners: {
+                topLeft: { x: -boardWidth / 2, y: boardHeight / 2, z: totalZ },
+                topRight: { x: boardWidth / 2, y: boardHeight / 2, z: totalZ },
+                bottomLeft: { x: -boardWidth / 2, y: -boardHeight / 2, z: totalZ },
+                bottomRight: { x: boardWidth / 2, y: -boardHeight / 2, z: totalZ }
+            },
+            boundingBox: {
+                min: { x: -boardWidth / 2, y: -boardHeight / 2, z: 0 },
+                max: { x: boardWidth / 2, y: boardHeight / 2, z: totalZ }
+            }
+        }
+    };
+
+    // Add checkerboard corners (intersection points)
+    for (let row = 0; row <= params.squaresY; row++) {
+        for (let col = 0; col <= params.squaresX; col++) {
+            const x = col * params.squareSize - boardWidth / 2;
+            const y = -(row * params.squareSize - boardHeight / 2);
+
+            metadata.checkerboardCorners.push({
+                gridPosition: { x: col, y: row },
+                position: { x: x, y: y, z: totalZ },
+                isInterior: (row > 0 && row < params.squaresY && col > 0 && col < params.squaresX)
+            });
+        }
+    }
+
+    // Add marker information
+    let markerIndex = 0;
+    for (let row = 0; row < params.squaresY; row++) {
+        for (let col = 0; col < params.squaresX; col++) {
+            // Use the existing determineIsWhiteSquare function
+            const isWhite = determineIsWhiteSquare(row, col, params.firstSquareColor);
+
+            if (isWhite) {
+                const markerId = markerIds[markerIndex];
+                const squareCenterX = col * params.squareSize - boardWidth / 2 + params.squareSize / 2;
+                const squareCenterY = -(row * params.squareSize - boardHeight / 2 + params.squareSize / 2);
+                const halfMarkerDim = markerDim / 2;
+
+                metadata.markers.push({
+                    id: markerId,
+                    squarePosition: { x: col, y: row },
+                    center: { x: squareCenterX, y: squareCenterY, z: totalZ / 2 },
+                    corners: {
+                        topLeft: { x: squareCenterX - halfMarkerDim, y: squareCenterY + halfMarkerDim, z: totalZ },
+                        topRight: { x: squareCenterX + halfMarkerDim, y: squareCenterY + halfMarkerDim, z: totalZ },
+                        bottomLeft: { x: squareCenterX - halfMarkerDim, y: squareCenterY - halfMarkerDim, z: totalZ },
+                        bottomRight: { x: squareCenterX + halfMarkerDim, y: squareCenterY - halfMarkerDim, z: totalZ }
+                    }
+                });
+
+                markerIndex++;
+            }
+        }
+    }
+
+    return metadata;
+}

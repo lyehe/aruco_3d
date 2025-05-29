@@ -259,24 +259,29 @@
                                 <fieldset>
                                     <legend>Gap & Corner Styling</legend>
                                     <div class="field field-stacked">
-                                        <label>Gap Fill Type:</label>
+                                        <label>Gap Fill:</label>
                                         <div class="radio-group">
                                             <label class="radio-label">
-                                                <input type="radio" id="frm-array-gap-empty" name="array_gapFill"
-                                                    value="empty" checked>
-                                                <span>Empty</span>
+                                                <input type="radio" id="frm-array-gap-none" name="array_gapFill"
+                                                    value="none" checked> 
+                                                <span>No fill</span>
                                             </label>
                                             <label class="radio-label">
-                                                <input type="radio" id="frm-array-gap-black" name="array_gapFill"
-                                                    value="black">
-                                                <span>Fill Black</span>
+                                                <input type="radio" id="frm-array-gap-fill" name="array_gapFill"
+                                                    value="fill">
+                                                <span>Fill</span> <!-- Clarified label -->
                                             </label>
                                             <label class="radio-label">
-                                                <input type="radio" id="frm-array-gap-white" name="array_gapFill"
-                                                    value="white">
-                                                <span>Fill White</span>
+                                                <input type="radio" id="frm-array-gap-border" name="array_gapFill"
+                                                    value="border">
+                                                <span>Border</span>
                                             </label>
                                         </div>
+                                    </div>
+                                    <div class="field" id="array-border-width-field" style="display: none;">
+                                        <label for="frm-array-border-width">Border Width (mm):</label>
+                                        <input id="frm-array-border-width" name="array_borderWidth" type="number"
+                                            min="0" step="0.1" value="5">
                                     </div>
                                     <div class="field field-stacked">
                                         <label>Corner Fill Type:</label>
@@ -430,6 +435,7 @@
                                     STL</button>
                                 <button type="button" id="save-glb-button" class="button-primary">Save Colored
                                     GLB</button>
+                                <button type="button" id="export-metadata-button" class="button-primary">Export Metadata</button>
                             </div>
                         </div>
                         <div id="stl-preview-container">
@@ -468,6 +474,22 @@
                     selector.classList.remove('mobile-open');
                     toggle.textContent = '☰';
                 }
+            });
+        });
+
+        // Show/hide border width field based on gap fill selection
+        document.addEventListener('DOMContentLoaded', function() {
+            const gapFillRadios = document.querySelectorAll('input[name="array_gapFill"]');
+            const borderWidthField = document.getElementById('array-border-width-field');
+            
+            gapFillRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'border') {
+                        borderWidthField.style.display = 'flex';
+                    } else {
+                        borderWidthField.style.display = 'none';
+                    }
+                });
             });
         });
     </script>
