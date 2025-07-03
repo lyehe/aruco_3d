@@ -260,7 +260,6 @@ function collectUIElements() {
     uiElements.inputs.charuco.squaresY = document.getElementById('frm-charuco-squares-y');
     uiElements.inputs.charuco.squareSize = document.getElementById('frm-charuco-square-size');
     uiElements.inputs.charuco.markerMargin = document.getElementById('frm-charuco-marker-margin');
-    uiElements.radios.charuco.firstSquare = document.querySelectorAll('input[name="charuco_firstSquare"]');
     uiElements.textareas.charuco.ids = document.getElementById('frm-charuco-ids');
     uiElements.inputs.charuco.startId = document.getElementById('frm-charuco-start-id');
     uiElements.buttons.charuco_refillIds = document.getElementById('btn-charuco-refill-ids');

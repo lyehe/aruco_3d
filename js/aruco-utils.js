@@ -58,6 +58,40 @@ export function getArucoBitPattern(dictName, id, patternWidth, patternHeight) {
         }
     }
 
+    // Check if this is an AprilTag dictionary
+    const isAprilTag = dictName.startsWith('april_');
+    
+    // If it's AprilTag, rotate the pattern 180 degrees
+    if (isAprilTag) {
+        // Create a 2D array from the bits
+        const pattern2D = [];
+        for (let r = 0; r < patternHeight; r++) {
+            const row = [];
+            for (let c = 0; c < patternWidth; c++) {
+                row.push(bits[r * patternWidth + c]);
+            }
+            pattern2D.push(row);
+        }
+        
+        // Rotate 180 degrees (reverse both rows and columns)
+        const rotatedPattern2D = [];
+        for (let r = patternHeight - 1; r >= 0; r--) {
+            const row = [];
+            for (let c = patternWidth - 1; c >= 0; c--) {
+                row.push(pattern2D[r][c]);
+            }
+            rotatedPattern2D.push(row);
+        }
+        
+        // Convert back to 1D array
+        bits.length = 0; // Clear the array
+        for (let r = 0; r < patternHeight; r++) {
+            for (let c = 0; c < patternWidth; c++) {
+                bits.push(rotatedPattern2D[r][c]);
+            }
+        }
+    }
+
     // Add border
     const fullPatternWidth = patternWidth + 2;
     const fullPatternHeight = patternHeight + 2;

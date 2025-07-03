@@ -25,10 +25,6 @@ export function initCharucoUI(uiElements, dict, mainGroup, onUpdate) {
         if (element) element.addEventListener('change', prefillCharucoIds);
     });
 
-    uiElements_charuco.radios.charuco.firstSquare.forEach(radio =>
-        radio.addEventListener('change', prefillCharucoIds)
-    );
-
     const updateTriggers = [
         uiElements_charuco.inputs.charuco.squareSize,
         uiElements_charuco.inputs.charuco.markerMargin,
@@ -62,7 +58,7 @@ function getCharucoParameters() {
         z1: Number(uiElements_charuco.inputs.charuco.z1.value),
         z2: Number(uiElements_charuco.inputs.charuco.z2.value),
         extrusionType: document.querySelector('input[name="charuco_extrusion"]:checked').value,
-        firstSquareColor: document.querySelector('input[name="charuco_firstSquare"]:checked').value
+        firstSquareColor: 'black'
     };
 }
 
@@ -191,7 +187,6 @@ export function updateCharucoBoard() {
 
         onUpdateCallbacks_charuco.setInfoMessage(
             `ChArUco: ${params.squaresX}x${params.squaresY}, ` +
-            `First: ${params.firstSquareColor}. ` +
             `Total Z: ${totalZ.toFixed(2)}mm. ` +
             `Markers: ${numWhiteSquares}`
         );
@@ -433,7 +428,7 @@ export function getCharucoBaseFilename() {
         params.z1 + params.z2;
 
     return `${dictInfo.name}_charuco-${params.squaresX}x${params.squaresY}_` +
-        `${params.firstSquareColor}Start_sq${params.squareSize}mm_` +
+        `sq${params.squareSize}mm_` +
         `mrg${params.markerMargin}mm_mdim${markerDim.toFixed(1)}mm_` +
         `${params.extrusionType}_z${totalZ.toFixed(2)}mm`;
 }
@@ -474,7 +469,7 @@ export function getCharucoMetadataExport() {
             squareSize: params.squareSize,
             markerMargin: params.markerMargin,
             markerDimension: markerDim,
-            firstSquareColor: params.firstSquareColor,
+            firstSquareColor: 'black',
             z1_baseHeight: params.z1,
             z2_featureHeight: params.z2,
             totalHeight: totalZ,
