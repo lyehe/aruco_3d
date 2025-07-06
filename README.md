@@ -24,14 +24,18 @@ A web-based tool to generate 3D printable patterns for ArUco markers, enclosed A
     *   Save Black part as STL
     *   Save combined model as Colored GLB
 
+## Example
+![Example](static/image.png)
 
 ## How to Use
-1.  Ensure you have all project files (HTML, CSS, and the `js` directory).
-2.  Open the main HTML file (likely `designer.html` if you've restored it, or the primary HTML file of the project) in a modern web browser that supports WebGL (e.g., Chrome, Firefox, Edge).
-3.  Select the desired marker type (Single Marker, Marker Array, ChArUco Board) from the sidebar on the left.
-4.  Configure the parameters in the form panel. The available options will change based on the selected marker type.
-5.  The 3D preview on the right will update as you change the parameters.
-6.  Use the "Save White STL", "Save Black STL", or "Save Colored GLB" buttons to download the generated model parts.
+1.  Use black and white filaments. PLA or PLA+ is recommended. The quality of the print is dependent on the quality of the filament and 3D printer.
+2.  Flow rate should be calibrated for the best top surface quality.
+3.  For single colored printer, print the base layer, change the filament, and print the feature layer.
+4.  The corner radius is limited by your printer's nozzle size, so the edges will not be as share as tags printed using a regular printer or UV printer. In practice, it is not a problem with sufficently large tags. 0.2 mm nozzle can handle ~20x20 mm tag size (2x2 mm small squares). 0.4 mm nozzle handles ~40x40 mm tag size (4x4 mm small squares).
+5.  Make sure the tag is printed with at 1 mm thickness to prevent warping. For large tags and boards, increase the thickness. For 300x300 mm boards, >5 mm thickness is recommended.
+6.  Before detaching the tag from the base, make sure the tag is fully cooled down to avoid warping.
+7.  For the smoothest tags, print the tags facing down to a smooth build plate.
+
 
 ## Acknowledgments
 Marker dictionaries used in this project are sourced from the `arucogen` project by okalachev, available at [https://github.com/okalachev/arucogen](https://github.com/okalachev/arucogen). 
