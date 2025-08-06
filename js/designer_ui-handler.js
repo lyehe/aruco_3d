@@ -6,6 +6,7 @@ import { disposeGroup } from './geometry-utils.js';
 import { initSingleMarkerUI, updateSingleMarker, getSingleMarkerBaseFilename, getColoredElementsFromSingle, getSingleMarkerMetadataExport } from './single-marker-handler.js';
 import { initArrayMarkerUI, updateMarkerArray, prefillArrayIds as prefillArrayIds_array, getArrayBaseFilename, getColoredElementsFromArray, getArrayMetadataExport } from './array-marker-handler.js';
 import { initCharucoUI, updateCharucoBoard, prefillCharucoIds as prefillCharucoIds_charuco, getCharucoBaseFilename, getColoredElementsFromCharuco, getCharucoMetadataExport } from './charuco-board-handler.js';
+import { initQrCodeUI, updateQrCode, getQrCodeBaseFilename, getColoredElementsFromQr, getQrCodeMetadataExport } from './qr-code-handler.js';
 
 let dict;
 let currentMode = 'single';
@@ -15,10 +16,10 @@ let mainObjectGroup = new THREE.Group();
 const uiElements = {
     panels: {},
     buttons: {},
-    inputs: { single: {}, array: {}, charuco: {} },
-    selects: { single: {}, array: {}, charuco: {} },
-    textareas: { single: {}, array: {}, charuco: {} },
-    radios: { single: {}, array: {}, charuco: {} },
+    inputs: { single: {}, array: {}, charuco: {}, qr: {} },
+    selects: { single: {}, array: {}, charuco: {}, qr: {} },
+    textareas: { single: {}, array: {}, charuco: {}, qr: {} },
+    radios: { single: {}, array: {}, charuco: {}, qr: {} },
     infoDisplay: null
 };
 
@@ -93,6 +94,9 @@ function triggerCurrentModeUpdate() {
                 updateCharucoBoard();
             }
             break;
+        case 'qr':
+            updateQrCode();
+            break;
     }
 }
 
@@ -113,6 +117,8 @@ function getCurrentModeBaseFilename() {
             return getArrayBaseFilename();
         case 'charuco':
             return getCharucoBaseFilename();
+        case 'qr':
+            return getQrCodeBaseFilename();
         default:
             console.warn("Unknown mode for filename:", currentMode);
             return 'export';
@@ -139,6 +145,12 @@ function exportSTLColor(colorName) {
             break;
         case 'charuco':
             colorGroup = getColoredElementsFromCharuco(targetMaterial);
+            break;
+        case 'qr':
+            const qrElements = getColoredElementsFromQr();
+            const targetElements = colorName === 'white' ? qrElements.whiteElements : qrElements.blackElements;
+            colorGroup = new THREE.Group();
+            targetElements.forEach(element => colorGroup.add(element.clone()));
             break;
         default:
             console.error("ExportSTLColor: Unknown mode - ", currentMode);
@@ -195,6 +207,9 @@ function exportMetadata() {
             case 'charuco':
                 metadata = getCharucoMetadataExport();
                 break;
+            case 'qr':
+                metadata = getQrCodeMetadataExport();
+                break;
         }
 
         const jsonString = JSON.stringify(metadata, null, 2);
@@ -214,11 +229,13 @@ function collectUIElements() {
     uiElements.panels.single = document.getElementById('panel-single');
     uiElements.panels.array = document.getElementById('panel-array');
     uiElements.panels.charuco = document.getElementById('panel-charuco');
+    uiElements.panels.qr = document.getElementById('panel-qr');
 
     // Mode buttons
     uiElements.buttons.mode_single = document.getElementById('btn-mode-single');
     uiElements.buttons.mode_array = document.getElementById('btn-mode-array');
     uiElements.buttons.mode_charuco = document.getElementById('btn-mode-charuco');
+    uiElements.buttons.mode_qr = document.getElementById('btn-mode-qr');
 
     // Common elements
     uiElements.infoDisplay = document.querySelector('.info-display');
@@ -267,6 +284,15 @@ function collectUIElements() {
     uiElements.inputs.charuco.z1 = document.getElementById('frm-charuco-z1');
     uiElements.inputs.charuco.z2 = document.getElementById('frm-charuco-z2');
     uiElements.radios.charuco.extrusion = document.querySelectorAll('input[name="charuco_extrusion"]');
+
+    // QR Code elements
+    uiElements.textareas.qr.content = document.getElementById('frm-qr-content');
+    uiElements.selects.qr.errorCorrection = document.getElementById('frm-qr-error-correction');
+    uiElements.inputs.qr.dim = document.getElementById('frm-qr-dim');
+    uiElements.inputs.qr.borderWidth = document.getElementById('frm-qr-border-width');
+    uiElements.inputs.qr.z1 = document.getElementById('frm-qr-z1');
+    uiElements.inputs.qr.z2 = document.getElementById('frm-qr-z2');
+    uiElements.radios.qr.extrusion = document.querySelectorAll('input[name="qr_extrusion"]');
 }
 
 function setupEventListeners() {
@@ -279,6 +305,9 @@ function setupEventListeners() {
     }
     if (uiElements.buttons.mode_charuco) {
         uiElements.buttons.mode_charuco.addEventListener('click', () => switchMode('charuco'));
+    }
+    if (uiElements.buttons.mode_qr) {
+        uiElements.buttons.mode_qr.addEventListener('click', () => switchMode('qr'));
     }
 
     // Export buttons
@@ -313,6 +342,7 @@ export function initControls(loadDictPromise) {
         initSingleMarkerUI(uiElements, dictionaryData, mainObjectGroup, onUpdateCallbacks);
         initArrayMarkerUI(uiElements, dictionaryData, mainObjectGroup, onUpdateCallbacks);
         initCharucoUI(uiElements, dictionaryData, mainObjectGroup, onUpdateCallbacks);
+        initQrCodeUI(uiElements, mainObjectGroup, onUpdateCallbacks);
 
         // Trigger initial update
         triggerCurrentModeUpdate();

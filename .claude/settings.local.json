@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "Bash(start \"\" \"test_nayuki_qr.html\")",
+      "Bash(rm:*)",
+      "WebFetch(domain:unpkg.com)",
+      "WebFetch(domain:app.unpkg.com)",
+      "WebFetch(domain:cdn.jsdelivr.net)"
+    ],
+    "deny": []
+  }
+}

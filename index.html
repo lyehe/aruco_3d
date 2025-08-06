@@ -8,13 +8,14 @@
     <meta name="description" content="Online 3D ArUco and ChArUco Pattern Generator for printing">
     <meta name="keywords"
         content="ArUco, ChArUco, AprilTag, OpenCV, april, tag, marker, array, grid, checkerboard, board, dictionary, family, print, stl, 3d printing, computer vision, robotics">
-    <link rel="icon" type="image/png" href="favicon.png">
     <title>Online 3D Marker Pattern Generator</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath d='M0 0h16v16H0z' fill='%23fff'/%3e%3cpath d='M0 0h6v6H0zm10 0h6v6h-6zM0 10h6v6H0zm10 10h6v6h-6z' fill='%23000'/%3e%3c/svg%3e">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/exporters/STLExporter.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/utils/BufferGeometryUtils.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/exporters/GLTFExporter.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Jersey+25&display=swap" rel="stylesheet">
@@ -37,6 +38,7 @@
                 <button id="btn-mode-single" class="mode-button active">Single Marker</button>
                 <button id="btn-mode-array" class="mode-button">Marker Array</button>
                 <button id="btn-mode-charuco" class="mode-button">ChArUco Board</button>
+                <button id="btn-mode-qr" class="mode-button">QR Code</button>
             </nav>
 
             <!-- Main content area -->
@@ -401,6 +403,67 @@
                                             <label class="radio-label">
                                                 <input type="radio" id="frm-charuco-flat" name="charuco_extrusion"
                                                     value="flat">
+                                                <span>Flat</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+
+                            <!-- Panel for QR Code -->
+                            <div id="panel-qr" class="mode-panel">
+                                <fieldset>
+                                    <legend>QR Code Content</legend>
+                                    <div class="field field-stacked">
+                                        <label for="frm-qr-content">Text or URL:</label>
+                                        <textarea id="frm-qr-content" name="qr_content" rows="4" 
+                                            placeholder="Enter text, URL, or any data to encode as QR code">https://example.com</textarea>
+                                        <span class="field-hint">Enter any text, URL, or data to encode as QR code</span>
+                                    </div>
+                                    <div class="field">
+                                        <label for="frm-qr-error-correction">Error Correction Level:</label>
+                                        <select name="qr_errorCorrection" id="frm-qr-error-correction">
+                                            <option value="L">Low (~7%)</option>
+                                            <option value="M" selected>Medium (~15%)</option>
+                                            <option value="Q">Quartile (~25%)</option>
+                                            <option value="H">High (~30%)</option>
+                                        </select>
+                                    </div>
+                                </fieldset>
+
+                                <fieldset>
+                                    <legend>QR Code Properties</legend>
+                                    <div class="field">
+                                        <label for="frm-qr-dim">QR Code dimension (mm):</label>
+                                        <input id="frm-qr-dim" name="qr_dim" type="number" min="10" max="500" value="50">
+                                        <span class="field-hint">Total size of QR code (always square). Module size calculated automatically.</span>
+                                    </div>
+                                    <div class="field">
+                                        <label for="frm-qr-border-width">Border Width (mm):</label>
+                                        <input id="frm-qr-border-width" name="qr_borderWidth" type="number" min="0" step="0.1" value="5">
+                                        <span class="field-hint">White border around QR code (set to 0 for no border)</span>
+                                    </div>
+                                    <div class="field">
+                                        <label for="frm-qr-z1">Base height (z1) (mm):</label>
+                                        <input id="frm-qr-z1" name="qr_z1" type="number" min="0" max="50" step="0.1" value="2">
+                                    </div>
+                                    <div class="field">
+                                        <label for="frm-qr-z2">Feature height (z2) (mm):</label>
+                                        <input id="frm-qr-z2" name="qr_z2" type="number" min="0.1" max="50" step="0.1" value="1">
+                                    </div>
+                                    <div class="field field-stacked">
+                                        <label>Extrusion Type:</label>
+                                        <div class="radio-group">
+                                            <label class="radio-label">
+                                                <input type="radio" id="frm-qr-positive" name="qr_extrusion" value="positive" checked>
+                                                <span>Positive</span>
+                                            </label>
+                                            <label class="radio-label">
+                                                <input type="radio" id="frm-qr-negative" name="qr_extrusion" value="negative">
+                                                <span>Negative</span>
+                                            </label>
+                                            <label class="radio-label">
+                                                <input type="radio" id="frm-qr-flat" name="qr_extrusion" value="flat">
                                                 <span>Flat</span>
                                             </label>
                                         </div>
