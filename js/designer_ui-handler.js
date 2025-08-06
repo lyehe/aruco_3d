@@ -147,10 +147,7 @@ function exportSTLColor(colorName) {
             colorGroup = getColoredElementsFromCharuco(targetMaterial);
             break;
         case 'qr':
-            const qrElements = getColoredElementsFromQr();
-            const targetElements = colorName === 'white' ? qrElements.whiteElements : qrElements.blackElements;
-            colorGroup = new THREE.Group();
-            targetElements.forEach(element => colorGroup.add(element.clone()));
+            colorGroup = getColoredElementsFromQr(targetMaterial);
             break;
         default:
             console.error("ExportSTLColor: Unknown mode - ", currentMode);

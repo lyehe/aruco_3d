@@ -1,7 +1,6 @@
-import { generateMarkerMesh, MIN_THICKNESS, disposeMarkerMesh } from './aruco-utils.js';
+import { generateMarkerMesh, MIN_THICKNESS } from './aruco-utils.js';
 import { validateDimensions, createBoxAt, mergeAndDisposeGeometries } from './geometry-utils.js';
 import { blackMaterial, whiteMaterial } from './config.js';
-import { disposeGroup } from './geometry-utils.js';
 
 let uiElements_qr;
 let mainObjectGroup_qr;
@@ -247,14 +246,7 @@ function generateQrBitPattern(content, errorCorrectionLevel) {
                             bitPattern.push(bitRow);
                         }
                         
-                        console.log(`Direct QR pattern: ${blackCount} black modules, ${whiteCount} white modules`);
-                        
-                        // Debug: show pattern diversity
-                        const sampleDebug = [];
-                        for (let i = 0; i < Math.min(5, moduleCount); i++) {
-                            sampleDebug.push(bitPattern[i].slice(0, Math.min(5, moduleCount)).join(','));
-                        }
-                        console.log(`Sample pattern (first 5x5):`, sampleDebug);
+                        console.log(`QR Code pattern: ${blackCount} black modules, ${whiteCount} white modules`);
                         
                         // Clean up
                         document.body.removeChild(tempDiv);
@@ -398,19 +390,20 @@ export function getQrCodeBaseFilename() {
     return `QR_${safeContent}`;
 }
 
-export function getColoredElementsFromQr() {
-    const whiteElements = [];
-    const blackElements = [];
+export function getColoredElementsFromQr(targetMaterial) {
+    const coloredGroup = new THREE.Group();
 
-    mainObjectGroup_qr.children.forEach(child => {
-        if (child.material === whiteMaterial) {
-            whiteElements.push(child);
-        } else if (child.material === blackMaterial) {
-            blackElements.push(child);
+    // Recursively traverse the entire QR object hierarchy to find matching meshes
+    mainObjectGroup_qr.traverse((object) => {
+        if (object.isMesh && object.material === targetMaterial) {
+            // Clone the mesh with proper world transformation
+            const newMesh = new THREE.Mesh(object.geometry.clone(), object.material);
+            newMesh.geometry.applyMatrix4(object.matrixWorld);
+            coloredGroup.add(newMesh);
         }
     });
 
-    return { whiteElements, blackElements };
+    return coloredGroup;
 }
 
 export function getQrCodeMetadataExport() {

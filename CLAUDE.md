@@ -84,10 +84,27 @@ The `dict.json` file contains bit patterns for multiple marker families. Each ma
 ### Memory Management
 The application disposes of Three.js geometries and materials when regenerating models to prevent memory leaks. This is critical due to the potential for large geometry creation.
 
+### QR Code Implementation
+The QR Code generation mode (4th mode) was added to complement the existing ArUco/ChArUco functionality:
+
+**Library**: Uses QRCode.js (cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js) for reliable QR generation
+**Direct Matrix Access**: Accesses the internal `_oQRCode` object to extract binary matrix data directly via `isDark(row, col)` method, eliminating image sampling issues
+**Error Correction Levels**: Supports L (~7%), M (~15%), Q (~25%), H (~30%) error correction
+**Dynamic Sizing**: Automatic module count detection (21×21, 25×25, 29×29, etc.) based on content length and error correction level
+**Border Support**: Optional white border generation using 3D geometry (not pattern expansion)
+**STL Export**: Full integration with existing export system using recursive traversal for mesh collection
+
+**Key Technical Details**:
+- Uses `generateMarkerMesh()` from aruco-utils.js for consistent 3D geometry generation
+- Converts QR convention (dark=true) to ArUco convention (dark=0, light=1) for compatibility
+- Implements Promise-based generation with 100ms timeout for QR library completion
+- Creates complex group hierarchy: finalGroup → (coreQrGroup + borderMesh)
+- STL export uses `traverse()` method to find all meshes by material type
+
 ### Export Formats
 - STL files for individual colors (white/black parts)
-- GLB files for colored models (both materials in one file)
-- Metadata export for marker specifications
+- GLB files for colored models (both materials in one file)  
+- Metadata export for marker specifications (includes QR content and parameters)
 
 ### Responsive Design
 The UI uses CSS Grid and Flexbox with mobile-first responsive design. The sidebar navigation collapses on mobile devices with a hamburger menu.
