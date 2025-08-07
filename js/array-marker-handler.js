@@ -209,7 +209,7 @@ export function updateMarkerArray() {
     }
 }
 
-function getArrayParameters() {
+export function getArrayParameters() {
     return {
         gridX: Number(uiElements_array.inputs.array.gridX.value),
         gridY: Number(uiElements_array.inputs.array.gridY.value),
@@ -228,7 +228,7 @@ function getArrayParameters() {
     };
 }
 
-function getDictionaryInfo() {
+export function getDictionaryInfo() {
     const selectedDictElement = uiElements_array.selects.array.dict;
     const option = selectedDictElement.options[selectedDictElement.selectedIndex];
     return {

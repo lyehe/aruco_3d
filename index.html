@@ -16,6 +16,7 @@
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/utils/BufferGeometryUtils.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/exporters/GLTFExporter.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Jersey+25&display=swap" rel="stylesheet">
@@ -436,7 +437,6 @@
                                     <div class="field">
                                         <label for="frm-qr-dim">QR Code dimension (mm):</label>
                                         <input id="frm-qr-dim" name="qr_dim" type="number" min="10" max="500" value="50">
-                                        <span class="field-hint">Total size of QR code (always square). Module size calculated automatically.</span>
                                     </div>
                                     <div class="field">
                                         <label for="frm-qr-border-width">Border Width (mm):</label>
@@ -484,7 +484,15 @@
                                     STL</button>
                                 <button type="button" id="save-glb-button" class="button-primary">Save Colored
                                     GLB</button>
+                                <button type="button" id="save-png-button" class="button-primary">Save PNG (600 DPI)</button>
+                                <button type="button" id="save-svg-button" class="button-primary">Save SVG</button>
                                 <button type="button" id="export-metadata-button" class="button-primary">Export Metadata</button>
+                                <button type="button" id="export-config-button" class="button-secondary">Export Config</button>
+                                <button type="button" id="import-config-button" class="button-secondary">Import Config</button>
+                                <button type="button" id="share-url-button" class="button-secondary">Share URL</button>
+                                <button type="button" id="copy-compressed-button" class="button-secondary">Copy Config</button>
+                                <button type="button" id="import-compressed-button" class="button-secondary">Paste Config</button>
+                                <input type="file" id="config-file-input" accept=".yaml,.yml" style="display: none;">
                             </div>
                         </div>
                         <div id="stl-preview-container">

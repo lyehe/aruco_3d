@@ -131,7 +131,7 @@ export function updateQrCode() {
     }
 }
 
-function getQrCodeParameters() {
+export function getQrCodeParameters() {
     const content = uiElements_qr.textareas.qr.content?.value?.trim() || '';
     const errorCorrection = uiElements_qr.selects.qr.errorCorrection?.value || 'M';
     const dimension = parseFloat(uiElements_qr.inputs.qr.dim?.value) || 50;
@@ -174,7 +174,7 @@ function getQrCodeParameters() {
     };
 }
 
-function generateQrBitPattern(content, errorCorrectionLevel) {
+export function generateQrBitPattern(content, errorCorrectionLevel) {
     try {
         // Check if QRCode.js library is loaded
         if (typeof QRCode === 'undefined') {
@@ -225,7 +225,6 @@ function generateQrBitPattern(content, errorCorrectionLevel) {
                         }
             
                         const moduleCount = qrData.getModuleCount();
-                        console.log(`Generated QR Code: ${moduleCount}×${moduleCount} modules`);
                         
                         // Extract bit pattern directly from QR modules
                         const bitPattern = [];
@@ -246,7 +245,6 @@ function generateQrBitPattern(content, errorCorrectionLevel) {
                             bitPattern.push(bitRow);
                         }
                         
-                        console.log(`QR Code pattern: ${blackCount} black modules, ${whiteCount} white modules`);
                         
                         // Clean up
                         document.body.removeChild(tempDiv);
@@ -422,4 +420,125 @@ export function getQrCodeMetadataExport() {
         extrusionType: qrData.extrusionType,
         generatedAt: new Date().toISOString()
     };
+}
+
+export function generateQrCodeSVG() {
+    const qrData = getQrCodeParameters();
+    if (!qrData.valid) {
+        throw new Error('Invalid QR code parameters: ' + qrData.error);
+    }
+
+    // Calculate total dimensions including border
+    const totalDimension = qrData.dimension + (2 * qrData.borderWidth);
+
+    return new Promise((resolve, reject) => {
+        generateQrBitPattern(qrData.content, qrData.errorCorrection).then(bitPattern => {
+            if (!bitPattern) {
+                reject(new Error('Failed to generate QR pattern'));
+                return;
+            }
+
+            try {
+                const patternSize = bitPattern.length;
+                const moduleSize = qrData.dimension / patternSize;
+
+                let svgContent = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totalDimension} ${totalDimension}" width="${totalDimension}mm" height="${totalDimension}mm">
+  <desc>QR Code - Content: ${qrData.content.substring(0, 50)}${qrData.content.length > 50 ? '...' : ''}</desc>`;
+                
+                // Add white background
+                svgContent += `
+  <rect x="0" y="0" width="${totalDimension}" height="${totalDimension}" fill="#ffffff" stroke="none"/>`;
+                
+                // Draw QR code modules using a single path to avoid hairlines
+                let pathData = '';
+                for (let row = 0; row < patternSize; row++) {
+                    for (let col = 0; col < patternSize; col++) {
+                        const moduleValue = bitPattern[row][col];
+                        if (moduleValue === 0) { // Black module
+                            const x = qrData.borderWidth + (col * moduleSize);
+                            const y = qrData.borderWidth + (row * moduleSize);
+                            pathData += `M${x.toFixed(3)},${y.toFixed(3)} h${moduleSize.toFixed(3)} v${moduleSize.toFixed(3)} h-${moduleSize.toFixed(3)} z `;
+                        }
+                    }
+                }
+                
+                if (pathData) {
+                    svgContent += `
+  <path d="${pathData}" fill="#000000" fill-rule="evenodd"/>`;
+                }
+                
+                svgContent += `
+</svg>`;
+                
+                resolve(svgContent);
+                
+            } catch (error) {
+                reject(error);
+            }
+        }).catch(reject);
+    });
+}
+
+export function generateQrCodePNG() {
+    const qrData = getQrCodeParameters();
+    if (!qrData.valid) {
+        throw new Error('Invalid QR code parameters');
+    }
+
+    // Calculate total dimensions including border
+    const totalDimension = qrData.dimension + (2 * qrData.borderWidth);
+    
+    // Create high-resolution canvas at 600 DPI
+    const dotsPerMm = 600 / 25.4;
+    const canvasSize = Math.round(totalDimension * dotsPerMm);
+    const canvas = document.createElement('canvas');
+    canvas.width = canvasSize;
+    canvas.height = canvasSize;
+    const ctx = canvas.getContext('2d');
+    
+    // Set up high-quality rendering
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvasSize, canvasSize);
+    
+    return new Promise((resolve, reject) => {
+        generateQrBitPattern(qrData.content, qrData.errorCorrection).then(bitPattern => {
+            if (!bitPattern) {
+                reject(new Error('Failed to generate QR pattern'));
+                return;
+            }
+
+            try {
+                const patternSize = bitPattern.length;
+                const qrSizePixels = Math.round(qrData.dimension * dotsPerMm);
+                const borderSizePixels = Math.round(qrData.borderWidth * dotsPerMm);
+                const moduleSize = qrSizePixels / patternSize;
+                
+                // Draw border if specified
+                if (qrData.borderWidth > 0) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, canvasSize, canvasSize);
+                }
+                
+                // Draw QR code modules
+                ctx.fillStyle = '#000000'; // Black modules
+                for (let row = 0; row < patternSize; row++) {
+                    for (let col = 0; col < patternSize; col++) {
+                        const moduleValue = bitPattern[row][col];
+                        if (moduleValue === 0) { // Black module
+                            const x = borderSizePixels + (col * moduleSize);
+                            const y = borderSizePixels + (row * moduleSize);
+                            ctx.fillRect(Math.round(x), Math.round(y), Math.ceil(moduleSize), Math.ceil(moduleSize));
+                        }
+                    }
+                }
+                
+                resolve(canvas);
+                
+            } catch (error) {
+                reject(error);
+            }
+        }).catch(reject);
+    });
 }

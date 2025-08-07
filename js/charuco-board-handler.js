@@ -45,7 +45,7 @@ export function initCharucoUI(uiElements, dict, mainGroup, onUpdate) {
     );
 }
 
-function getCharucoParameters() {
+export function getCharucoParameters() {
     return {
         squaresX: Number(uiElements_charuco.inputs.charuco.squaresX.value),
         squaresY: Number(uiElements_charuco.inputs.charuco.squaresY.value),
@@ -62,7 +62,7 @@ function getCharucoParameters() {
     };
 }
 
-function getDictionaryInfo() {
+export function getDictionaryInfo() {
     const selectedDictElement = uiElements_charuco.selects.charuco.dict;
     const option = selectedDictElement.options[selectedDictElement.selectedIndex];
 
