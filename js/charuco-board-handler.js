@@ -178,6 +178,8 @@ export function updateCharucoBoard() {
         const totalZ = params.extrusionType === "flat" ?
             Math.max(params.z2, MIN_THICKNESS) :
             params.z1 + params.z2;
+        const boardWidth = params.squaresX * params.squareSize;
+        const boardHeight = params.squaresY * params.squareSize;
 
         const numWhiteSquares = calculateNumWhiteSquares(
             params.squaresX,
@@ -186,9 +188,10 @@ export function updateCharucoBoard() {
         );
 
         onUpdateCallbacks_charuco.setInfoMessage(
-            `ChArUco: ${params.squaresX}x${params.squaresY} of ${dictInfo.name}. ` +
-            `Total Z: ${totalZ.toFixed(2)}mm. ` +
+            `ChArUco: ${params.squaresX}x${params.squaresY} (${dictInfo.name}). ` +
+            `Size: ${boardWidth.toFixed(2)}x${boardHeight.toFixed(2)}mm. ` +
             `Square: ${params.squareSize.toFixed(2)}mm. ` +
+            `Total Z: ${totalZ.toFixed(2)}mm. ` +
             `Markers: ${numWhiteSquares}`
         );
         onUpdateCallbacks_charuco.setSaveDisabled(false);

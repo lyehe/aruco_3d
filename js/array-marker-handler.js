@@ -194,15 +194,26 @@ export function updateMarkerArray() {
             Math.max(params.z2, MIN_THICKNESS) :
             params.z1 + params.z2;
         const unitSquareSize = params.dim / (dictInfo.patternWidth + 2);
-        const borderInfo = params.gapFillType === 'border' ?
-            `. Indiv. Border: ${params.individualBorderWidth}mm` :
+        const markerEnvelopeDim = params.dim +
+            (params.gapFillType === 'border' && params.individualBorderWidth > MIN_THICKNESS ?
+                2 * params.individualBorderWidth :
+                0);
+        const markerStep = markerEnvelopeDim + params.gap;
+        const markerGridWidth = params.gridX * markerStep - (params.gridX > 0 ? params.gap : 0);
+        const markerGridHeight = params.gridY * markerStep - (params.gridY > 0 ? params.gap : 0);
+        const outerBorder = params.gapFillType === 'fill' ? params.gap : 0;
+        const totalWidth = markerGridWidth + 2 * outerBorder;
+        const totalHeight = markerGridHeight + 2 * outerBorder;
+        const borderInfo = params.gapFillType === 'border' && params.individualBorderWidth > MIN_THICKNESS ?
+            `. Indiv. Border: ${params.individualBorderWidth.toFixed(2)}mm` :
             '';
 
         onUpdateCallbacks_array.setInfoMessage(
-            `Array: ${params.gridX}x${params.gridY} of ${dictInfo.name}. ` +
-            `Total Z: ${totalZ.toFixed(2)}mm. ` +
+            `Array: ${params.gridX}x${params.gridY} (${dictInfo.name}). ` +
+            `Size: ${totalWidth.toFixed(2)}x${totalHeight.toFixed(2)}mm. ` +
             `Square: ${unitSquareSize.toFixed(2)}mm. ` +
-            `Gap: ${params.gap}mm${borderInfo}`
+            `Total Z: ${totalZ.toFixed(2)}mm. ` +
+            `Gap: ${params.gap.toFixed(2)}mm${borderInfo}`
         );
         onUpdateCallbacks_array.setSaveDisabled(false);
 

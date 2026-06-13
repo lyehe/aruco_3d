@@ -314,16 +314,26 @@ function calculateSingleMarkerTotalZ(params) {
 
 function getMarkerInfo(params, dictInfo) {
     const totalZ = calculateSingleMarkerTotalZ(params);
+    const totalDim = params.dim + 2 * params.borderWidth;
+    const borderInfo = params.borderWidth > MIN_THICKNESS ?
+        `. Border: ${params.borderWidth.toFixed(2)}mm` :
+        '';
 
     if (isSpecialMarker(params.markerId)) {
         const colorDesc = params.markerId === SPECIAL_MARKERS.PURE_WHITE ? "Pure White" : "Pure Black";
-        return `Marker: ${colorDesc} Block. Size: ${params.dim}x${params.dim}mm. Total Z: ${totalZ.toFixed(2)}mm`;
+        return `Marker: ${colorDesc} Block. ` +
+            `Size: ${totalDim.toFixed(2)}x${totalDim.toFixed(2)}mm. ` +
+            `Square: ${params.dim.toFixed(2)}mm. ` +
+            `Total Z: ${totalZ.toFixed(2)}mm${borderInfo}`;
     }
 
     const markerModules = dictInfo.patternWidth + 2;
     const unitSquareSize = params.dim / markerModules;
 
-    return `Marker: ID ${params.markerId} (${dictInfo.name}). Total Z: ${totalZ.toFixed(2)}mm. Square: ${unitSquareSize.toFixed(2)}mm`;
+    return `Marker: ID ${params.markerId} (${dictInfo.name}). ` +
+        `Size: ${totalDim.toFixed(2)}x${totalDim.toFixed(2)}mm. ` +
+        `Square: ${unitSquareSize.toFixed(2)}mm. ` +
+        `Total Z: ${totalZ.toFixed(2)}mm${borderInfo}`;
 }
 
 export function getSingleMarkerBaseFilename() {
