@@ -2,6 +2,7 @@ import { generateMarkerMesh, getArucoBitPattern, validateMarkerId, isSpecialMark
 import { blackMaterial, whiteMaterial } from './config.js';
 import { getMaxIdFromSelect } from './ui-common-utils.js';
 import { mergeAndDisposeGeometries, createBoxAt, validateDimensions } from './geometry-utils.js';
+import { BOTTOM_LABEL_DEPTH, createEngravedLabelPlate, getBottomLabelMaterial, getMarkerBaseColor, getMarkerBottomLabelText } from './bottom-label-utils.js';
 
 let uiElements_array;
 let dictionaryData_array;
@@ -144,7 +145,8 @@ export function initArrayMarkerUI(uiElements, dict, mainGroup, onUpdate) {
         { element: uiElements_array.inputs.array.dim, handler: updateMarkerArray },
         { element: uiElements_array.inputs.array.z1, handler: updateMarkerArray },
         { element: uiElements_array.inputs.array.z2, handler: updateMarkerArray },
-        { element: uiElements_array.inputs.array.borderWidth, handler: updateMarkerArray }
+        { element: uiElements_array.inputs.array.borderWidth, handler: updateMarkerArray },
+        { element: uiElements_array.inputs.array.bottomLabel, handler: updateMarkerArray }
     ];
 
     updateTriggers.forEach(({ element, handler }) => {
@@ -188,11 +190,15 @@ export function updateMarkerArray() {
         generateMarkerArrayElements(params, dictInfo);
         if (params.gapFillType === 'fill') {
             generateGapFillElements(params);
+            if (params.bottomLabel) {
+                generateBottomGapSupport(params);
+            }
         }
 
         const totalZ = params.extrusionType === "flat" ?
             Math.max(params.z2, MIN_THICKNESS) :
             params.z1 + params.z2;
+        const printedTotalZ = totalZ + (params.bottomLabel ? BOTTOM_LABEL_DEPTH : 0);
         const unitSquareSize = params.dim / (dictInfo.patternWidth + 2);
         const markerEnvelopeDim = params.dim +
             (params.gapFillType === 'border' && params.individualBorderWidth > MIN_THICKNESS ?
@@ -212,8 +218,9 @@ export function updateMarkerArray() {
             `Array: ${params.gridX}x${params.gridY} (${dictInfo.name}). ` +
             `Size: ${totalWidth.toFixed(2)}x${totalHeight.toFixed(2)}mm. ` +
             `Square: ${unitSquareSize.toFixed(2)}mm. ` +
-            `Total Z: ${totalZ.toFixed(2)}mm. ` +
-            `Gap: ${params.gap.toFixed(2)}mm${borderInfo}`
+            `Total Z: ${printedTotalZ.toFixed(2)}mm. ` +
+            `Gap: ${params.gap.toFixed(2)}mm${borderInfo}` +
+            (params.bottomLabel ? `. Label: ${BOTTOM_LABEL_DEPTH.toFixed(2)}mm` : '')
         );
         onUpdateCallbacks_array.setSaveDisabled(false);
 
@@ -239,7 +246,8 @@ export function getArrayParameters() {
         extrusionType: document.querySelector('input[name="array_extrusion"]:checked').value,
         gapFillType: document.querySelector('input[name="array_gapFill"]:checked').value,
         cornerFillType: document.querySelector('input[name="array_cornerFill"]:checked').value,
-        individualBorderWidth: Number(uiElements_array.inputs.array.borderWidth.value)
+        individualBorderWidth: Number(uiElements_array.inputs.array.borderWidth.value),
+        bottomLabel: uiElements_array.inputs.array.bottomLabel?.checked || false
     };
 }
 
@@ -317,6 +325,23 @@ function generateMarkerArrayElements(params, dictInfo) {
                 stepSizeY += 2 * params.individualBorderWidth;
             }
 
+            if (params.bottomLabel) {
+                const labelMesh = createEngravedLabelPlate({
+                    text: getMarkerBottomLabelText(dictInfo.name, markerId),
+                    width: stepSizeX,
+                    height: stepSizeY,
+                    material: getBottomLabelMaterial(
+                        params.extrusionType,
+                        getMarkerBaseColor(markerId, params.extrusionType)
+                    ),
+                    name: `bottom_label_marker_${markerId}_${x}_${y}`
+                });
+
+                if (labelMesh) {
+                    markerGroup.add(labelMesh);
+                }
+            }
+
             stepSizeX += params.gap;
             stepSizeY += params.gap;
 
@@ -328,6 +353,66 @@ function generateMarkerArrayElements(params, dictInfo) {
             markerGroup.name = `marker_array_item_${markerId}_${x}_${y}`;
             mainObjectGroup_array.add(markerGroup);
         }
+    }
+}
+
+function generateBottomGapSupport(params) {
+    if (params.gap <= MIN_THICKNESS) return;
+
+    const material = getBottomLabelMaterial(params.extrusionType);
+    const z = -BOTTOM_LABEL_DEPTH / 2;
+    const geometries = [];
+    const step = params.dim + params.gap;
+    const markerBlockWidth = params.gridX * params.dim + Math.max(0, params.gridX - 1) * params.gap;
+    const markerBlockHeight = params.gridY * params.dim + Math.max(0, params.gridY - 1) * params.gap;
+    const halfDim = params.dim / 2;
+    const halfGap = params.gap / 2;
+    const halfMarkerBlockWidth = markerBlockWidth / 2;
+    const halfMarkerBlockHeight = markerBlockHeight / 2;
+    const halfOuterBorder = params.gap / 2;
+
+    for (let row = 0; row < params.gridY; row++) {
+        const y = (params.gridY - 1 - row) * step - (params.gridY - 1) * step / 2;
+        for (let col = 0; col < params.gridX - 1; col++) {
+            const x = col * step - (params.gridX - 1) * step / 2 + halfDim + halfGap;
+            geometries.push(createBoxAt(params.gap, params.dim, BOTTOM_LABEL_DEPTH, x, y, z));
+        }
+    }
+
+    for (let row = 0; row < params.gridY - 1; row++) {
+        const y = (params.gridY - 1 - (row + 1)) * step - (params.gridY - 1) * step / 2 + halfDim + halfGap;
+        for (let col = 0; col < params.gridX; col++) {
+            const x = col * step - (params.gridX - 1) * step / 2;
+            geometries.push(createBoxAt(params.dim, params.gap, BOTTOM_LABEL_DEPTH, x, y, z));
+        }
+    }
+
+    for (let row = 0; row < params.gridY - 1; row++) {
+        const y = (params.gridY - 1 - (row + 1)) * step - (params.gridY - 1) * step / 2 + halfDim + halfGap;
+        for (let col = 0; col < params.gridX - 1; col++) {
+            const x = col * step - (params.gridX - 1) * step / 2 + halfDim + halfGap;
+            geometries.push(createBoxAt(params.gap, params.gap, BOTTOM_LABEL_DEPTH, x, y, z));
+        }
+    }
+
+    [
+        { x: 0, y: halfMarkerBlockHeight + halfOuterBorder, w: markerBlockWidth, h: params.gap },
+        { x: 0, y: -(halfMarkerBlockHeight + halfOuterBorder), w: markerBlockWidth, h: params.gap },
+        { x: -(halfMarkerBlockWidth + halfOuterBorder), y: 0, w: params.gap, h: markerBlockHeight },
+        { x: halfMarkerBlockWidth + halfOuterBorder, y: 0, w: params.gap, h: markerBlockHeight },
+        { x: -(halfMarkerBlockWidth + halfOuterBorder), y: halfMarkerBlockHeight + halfOuterBorder, w: params.gap, h: params.gap },
+        { x: halfMarkerBlockWidth + halfOuterBorder, y: halfMarkerBlockHeight + halfOuterBorder, w: params.gap, h: params.gap },
+        { x: -(halfMarkerBlockWidth + halfOuterBorder), y: -(halfMarkerBlockHeight + halfOuterBorder), w: params.gap, h: params.gap },
+        { x: halfMarkerBlockWidth + halfOuterBorder, y: -(halfMarkerBlockHeight + halfOuterBorder), w: params.gap, h: params.gap }
+    ].forEach(part => {
+        geometries.push(createBoxAt(part.w, part.h, BOTTOM_LABEL_DEPTH, part.x, part.y, z));
+    });
+
+    const supportMesh = mergeAndDisposeGeometries(geometries, material);
+    if (supportMesh) {
+        supportMesh.name = 'bottom_label_gap_support';
+        supportMesh.userData.bottomLabel = true;
+        mainObjectGroup_array.add(supportMesh);
     }
 }
 
@@ -647,12 +732,14 @@ export function randomizeArrayIds() {
 export function getArrayBaseFilename() {
     const params = getArrayParameters();
     const dictInfo = getDictionaryInfo();
-    const totalZ = params.extrusionType === "flat" ? Math.max(params.z2, MIN_THICKNESS) : params.z1 + params.z2;
+    const totalZ = (params.extrusionType === "flat" ? Math.max(params.z2, MIN_THICKNESS) : params.z1 + params.z2) +
+        (params.bottomLabel ? BOTTOM_LABEL_DEPTH : 0);
     let filename = `${dictInfo.name}_array-${params.gridX}x${params.gridY}_${params.dim}x${params.dim}x${totalZ.toFixed(2)}mm_gap${params.gap}mm_${params.extrusionType}`;
     if (params.gapFillType === 'border' && params.individualBorderWidth > MIN_THICKNESS) {
         filename += `_indivBorder${params.individualBorderWidth.toFixed(1)}mm`;
     }
     if (params.gapFillType === 'fill') filename += `_fillWithOuterBorder`;
+    if (params.bottomLabel) filename += `_bottomLabel`;
     return filename;
 }
 
@@ -660,7 +747,8 @@ export function getArrayMetadataExport() {
     const params = getArrayParameters();
     const dictInfo = getDictionaryInfo();
     const markerIds = params.markerIdsRaw.map(Number);
-    const totalZ = params.extrusionType === "flat" ? Math.max(params.z2, MIN_THICKNESS) : params.z1 + params.z2;
+    const totalZ = (params.extrusionType === "flat" ? Math.max(params.z2, MIN_THICKNESS) : params.z1 + params.z2) +
+        (params.bottomLabel ? BOTTOM_LABEL_DEPTH : 0);
 
     let markerStepX = params.dim + (params.gapFillType === 'border' && params.individualBorderWidth > MIN_THICKNESS ? 2 * params.individualBorderWidth : 0) + params.gap;
     let markerStepY = params.dim + (params.gapFillType === 'border' && params.individualBorderWidth > MIN_THICKNESS ? 2 * params.individualBorderWidth : 0) + params.gap;
@@ -678,6 +766,8 @@ export function getArrayMetadataExport() {
             markerDimension: params.dim, gapWidth: params.gap,
             individualBorderWidth: params.gapFillType === 'border' ? params.individualBorderWidth : 0,
             gapFillType: params.gapFillType, cornerFillType: params.cornerFillType,
+            bottomLabel: params.bottomLabel,
+            bottomLabelDepth: params.bottomLabel ? BOTTOM_LABEL_DEPTH : 0,
             z1_baseHeight: params.z1, z2_featureHeight: params.z2, totalHeight: totalZ,
             extrusionType: params.extrusionType, markerGridWidth, markerGridHeight, totalWidth, totalHeight, units: 'mm'
         },

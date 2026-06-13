@@ -771,6 +771,9 @@ function compressConfig() {
                 readable += `,base=${settings.baseHeight}`;
                 readable += `,height=${settings.featureHeight}`;
                 readable += `,ext=${settings.extrusionType}`;
+                if (settings.bottomLabel) {
+                    readable += `,label=1`;
+                }
                 if (settings.borderCornerType !== 'same') {
                     readable += `,corner=${settings.borderCornerType}`;
                 }
@@ -785,6 +788,9 @@ function compressConfig() {
                 readable += `,height=${settings.featureHeight}`;
                 readable += `,ext=${settings.extrusionType}`;
                 readable += `,fill=${settings.gapFill}`;
+                if (settings.bottomLabel) {
+                    readable += `,label=1`;
+                }
                 if (settings.cornerFill !== 'same') {
                     readable += `,corner=${settings.cornerFill}`;
                 }
@@ -804,6 +810,9 @@ function compressConfig() {
                 readable += `,base=${settings.baseHeight}`;
                 readable += `,height=${settings.featureHeight}`;
                 readable += `,ext=${settings.extrusionType}`;
+                if (settings.bottomLabel) {
+                    readable += `,label=1`;
+                }
                 if (settings.markerIds) {
                     const ids = settings.markerIds.split(',').map(id => id.trim()).filter(id => id);
                     if (ids.length > 0) {
@@ -820,6 +829,9 @@ function compressConfig() {
                 readable += `,base=${settings.baseHeight}`;
                 readable += `,height=${settings.featureHeight}`;
                 readable += `,ext=${settings.extrusionType}`;
+                if (settings.bottomLabel) {
+                    readable += `,label=1`;
+                }
                 break;
         }
         
@@ -868,7 +880,8 @@ function decompressConfig(readableConfig) {
                     baseHeight: parseFloat(params.base) || 2,
                     featureHeight: parseFloat(params.height) || 1,
                     extrusionType: params.ext || 'positive',
-                    borderCornerType: params.corner || 'same'
+                    borderCornerType: params.corner || 'same',
+                    bottomLabel: params.label === '1' || params.label === 'true'
                 };
                 break;
                 
@@ -888,7 +901,8 @@ function decompressConfig(readableConfig) {
                     borderWidth: parseFloat(params.border) || 0,
                     extrusionType: params.ext || 'positive',
                     gapFill: params.fill || 'none',
-                    cornerFill: params.corner || 'same'
+                    cornerFill: params.corner || 'same',
+                    bottomLabel: params.label === '1' || params.label === 'true'
                 };
                 break;
                 
@@ -905,7 +919,8 @@ function decompressConfig(readableConfig) {
                     startId: parseInt(params.startId) || 0,
                     baseHeight: parseFloat(params.base) || 2,
                     featureHeight: parseFloat(params.height) || 1,
-                    extrusionType: params.ext || 'positive'
+                    extrusionType: params.ext || 'positive',
+                    bottomLabel: params.label === '1' || params.label === 'true'
                 };
                 break;
                 
@@ -917,7 +932,8 @@ function decompressConfig(readableConfig) {
                     borderWidth: parseFloat(params.border) || 5,
                     baseHeight: parseFloat(params.base) || 2,
                     featureHeight: parseFloat(params.height) || 1,
-                    extrusionType: params.ext || 'positive'
+                    extrusionType: params.ext || 'positive',
+                    bottomLabel: params.label === '1' || params.label === 'true'
                 };
                 break;
                 
@@ -998,7 +1014,8 @@ function getCurrentConfiguration() {
                 featureHeight: parseFloat(uiElements.inputs.single.z2?.value) || 1,
                 borderWidth: parseFloat(uiElements.inputs.single.borderWidth?.value) || 5,
                 extrusionType: Array.from(uiElements.radios.single.extrusion).find(r => r.checked)?.value || 'positive',
-                borderCornerType: Array.from(uiElements.radios.single.borderCornerType).find(r => r.checked)?.value || 'same'
+                borderCornerType: Array.from(uiElements.radios.single.borderCornerType).find(r => r.checked)?.value || 'same',
+                bottomLabel: uiElements.inputs.single.bottomLabel?.checked || false
             };
             break;
             
@@ -1016,7 +1033,8 @@ function getCurrentConfiguration() {
                 borderWidth: parseFloat(uiElements.inputs.array.borderWidth?.value) || 0,
                 extrusionType: Array.from(uiElements.radios.array.extrusion).find(r => r.checked)?.value || 'positive',
                 gapFill: Array.from(uiElements.radios.array.gapFill).find(r => r.checked)?.value || 'none',
-                cornerFill: Array.from(uiElements.radios.array.cornerFill).find(r => r.checked)?.value || 'same'
+                cornerFill: Array.from(uiElements.radios.array.cornerFill).find(r => r.checked)?.value || 'same',
+                bottomLabel: uiElements.inputs.array.bottomLabel?.checked || false
             };
             break;
             
@@ -1031,7 +1049,8 @@ function getCurrentConfiguration() {
                 startId: parseInt(uiElements.inputs.charuco.startId?.value) || 0,
                 baseHeight: parseFloat(uiElements.inputs.charuco.z1?.value) || 2,
                 featureHeight: parseFloat(uiElements.inputs.charuco.z2?.value) || 1,
-                extrusionType: Array.from(uiElements.radios.charuco.extrusion).find(r => r.checked)?.value || 'positive'
+                extrusionType: Array.from(uiElements.radios.charuco.extrusion).find(r => r.checked)?.value || 'positive',
+                bottomLabel: uiElements.inputs.charuco.bottomLabel?.checked || false
             };
             break;
             
@@ -1043,7 +1062,8 @@ function getCurrentConfiguration() {
                 borderWidth: parseFloat(uiElements.inputs.qr.borderWidth?.value) || 5,
                 baseHeight: parseFloat(uiElements.inputs.qr.z1?.value) || 2,
                 featureHeight: parseFloat(uiElements.inputs.qr.z2?.value) || 1,
-                extrusionType: Array.from(uiElements.radios.qr.extrusion).find(r => r.checked)?.value || 'positive'
+                extrusionType: Array.from(uiElements.radios.qr.extrusion).find(r => r.checked)?.value || 'positive',
+                bottomLabel: uiElements.inputs.qr.bottomLabel?.checked || false
             };
             break;
     }
@@ -1078,6 +1098,7 @@ function applySettingsToUI(config) {
                 if (uiElements.inputs.single.z1) uiElements.inputs.single.z1.value = settings.baseHeight || 2;
                 if (uiElements.inputs.single.z2) uiElements.inputs.single.z2.value = settings.featureHeight || 1;
                 if (uiElements.inputs.single.borderWidth) uiElements.inputs.single.borderWidth.value = settings.borderWidth || 5;
+                if (uiElements.inputs.single.bottomLabel) uiElements.inputs.single.bottomLabel.checked = !!settings.bottomLabel;
                 
                 // Set radio buttons
                 Array.from(uiElements.radios.single.extrusion).forEach(radio => {
@@ -1099,6 +1120,7 @@ function applySettingsToUI(config) {
                 if (uiElements.inputs.array.z1) uiElements.inputs.array.z1.value = settings.baseHeight || 2;
                 if (uiElements.inputs.array.z2) uiElements.inputs.array.z2.value = settings.featureHeight || 1;
                 if (uiElements.inputs.array.borderWidth) uiElements.inputs.array.borderWidth.value = settings.borderWidth || 0;
+                if (uiElements.inputs.array.bottomLabel) uiElements.inputs.array.bottomLabel.checked = !!settings.bottomLabel;
                 
                 // Set radio buttons
                 Array.from(uiElements.radios.array.extrusion).forEach(radio => {
@@ -1122,6 +1144,7 @@ function applySettingsToUI(config) {
                 if (uiElements.inputs.charuco.startId) uiElements.inputs.charuco.startId.value = settings.startId || 0;
                 if (uiElements.inputs.charuco.z1) uiElements.inputs.charuco.z1.value = settings.baseHeight || 2;
                 if (uiElements.inputs.charuco.z2) uiElements.inputs.charuco.z2.value = settings.featureHeight || 1;
+                if (uiElements.inputs.charuco.bottomLabel) uiElements.inputs.charuco.bottomLabel.checked = !!settings.bottomLabel;
                 
                 // Set radio buttons
                 Array.from(uiElements.radios.charuco.extrusion).forEach(radio => {
@@ -1136,6 +1159,7 @@ function applySettingsToUI(config) {
                 if (uiElements.inputs.qr.borderWidth) uiElements.inputs.qr.borderWidth.value = settings.borderWidth || 5;
                 if (uiElements.inputs.qr.z1) uiElements.inputs.qr.z1.value = settings.baseHeight || 2;
                 if (uiElements.inputs.qr.z2) uiElements.inputs.qr.z2.value = settings.featureHeight || 1;
+                if (uiElements.inputs.qr.bottomLabel) uiElements.inputs.qr.bottomLabel.checked = !!settings.bottomLabel;
                 
                 // Set radio buttons
                 Array.from(uiElements.radios.qr.extrusion).forEach(radio => {
@@ -1217,6 +1241,7 @@ function collectUIElements() {
     uiElements.inputs.single.z1 = document.getElementById('frm-single-z1');
     uiElements.inputs.single.z2 = document.getElementById('frm-single-z2');
     uiElements.inputs.single.borderWidth = document.getElementById('frm-single-border-width');
+    uiElements.inputs.single.bottomLabel = document.getElementById('frm-single-bottom-label');
     uiElements.radios.single.extrusion = document.querySelectorAll('input[name="single_extrusion"]');
     uiElements.radios.single.borderCornerType = document.querySelectorAll('input[name="single_borderCornerType"]');
 
@@ -1233,6 +1258,7 @@ function collectUIElements() {
     uiElements.inputs.array.z1 = document.getElementById('frm-array-z1');
     uiElements.inputs.array.z2 = document.getElementById('frm-array-z2');
     uiElements.inputs.array.borderWidth = document.getElementById('frm-array-border-width'); // Added for individual marker border width
+    uiElements.inputs.array.bottomLabel = document.getElementById('frm-array-bottom-label');
     uiElements.radios.array.extrusion = document.querySelectorAll('input[name="array_extrusion"]');
     uiElements.radios.array.gapFill = document.querySelectorAll('input[name="array_gapFill"]');
     uiElements.radios.array.cornerFill = document.querySelectorAll('input[name="array_cornerFill"]');
@@ -1249,6 +1275,7 @@ function collectUIElements() {
     uiElements.buttons.charuco_randomizeIds = document.getElementById('btn-charuco-randomize-ids');
     uiElements.inputs.charuco.z1 = document.getElementById('frm-charuco-z1');
     uiElements.inputs.charuco.z2 = document.getElementById('frm-charuco-z2');
+    uiElements.inputs.charuco.bottomLabel = document.getElementById('frm-charuco-bottom-label');
     uiElements.radios.charuco.extrusion = document.querySelectorAll('input[name="charuco_extrusion"]');
 
     // QR Code elements
@@ -1258,6 +1285,7 @@ function collectUIElements() {
     uiElements.inputs.qr.borderWidth = document.getElementById('frm-qr-border-width');
     uiElements.inputs.qr.z1 = document.getElementById('frm-qr-z1');
     uiElements.inputs.qr.z2 = document.getElementById('frm-qr-z2');
+    uiElements.inputs.qr.bottomLabel = document.getElementById('frm-qr-bottom-label');
     uiElements.radios.qr.extrusion = document.querySelectorAll('input[name="qr_extrusion"]');
 }
 

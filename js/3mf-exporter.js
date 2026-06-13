@@ -512,6 +512,21 @@ function assignObjectIds(meshes) {
     meshes.assemblyId = meshes.length + 1;
 }
 
+function moveMeshesToBuildPlate(meshes) {
+    const minZ = meshes.reduce((minimum, mesh) => {
+        return mesh.vertices.reduce((meshMinimum, vertex) => Math.min(meshMinimum, vertex[2]), minimum);
+    }, Infinity);
+
+    if (!Number.isFinite(minZ) || minZ >= 0) return;
+
+    const zOffset = -minZ;
+    meshes.forEach(mesh => {
+        mesh.vertices.forEach(vertex => {
+            vertex[2] = normalizeCoordinate(vertex[2] + zOffset);
+        });
+    });
+}
+
 function buildRootModelXml(meshes, title) {
     const componentRefs = meshes
         .map((mesh, index) => `    <component p:path="/3D/Objects/object_1.model" objectid="${mesh.objectId}" p:UUID="${getProductionUuid(index, 'b206')}" transform="1 0 0 0 1 0 0 0 1 0 0 0" />`)
@@ -781,6 +796,7 @@ export function exportThreeGroupTo3MF(root, title = 'model') {
         throw new Error('No mesh geometry found to export.');
     }
 
+    moveMeshesToBuildPlate(meshes);
     buildMaterialTable(meshes);
     assignObjectIds(meshes);
     const modelXml = buildRootModelXml(meshes, title);

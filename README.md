@@ -26,6 +26,7 @@ A comprehensive web-based tool to generate 3D printable patterns and 2D vector g
 *   **3D Extrusion** - Base height and feature height for 3D printing
 *   **Extrusion Types** - Positive, Negative, or Flat profiles
 *   **Border Configuration** - Width and corner color options
+*   **Bottom Labels** - Optional 0.2 mm underside engraved labels for marker IDs and board/QR metadata
 *   **Array Layout** - Grid dimensions (X×Y) with gap filling options
 *   **ChArUco Setup** - Checkerboard size, square dimensions, marker margins
 *   **QR Code Content** - Custom text, URLs, or data with error correction levels
@@ -86,6 +87,7 @@ https://lyehe.github.io/aruco_3d/?config=single:dict=4x4_1000,id=123,size=50,bor
 
 ### 3D Models (3MF)
 - **3MF:** Combined printable model with separate `white` and `black` parts for multi-filament slicers
+- **Bottom Label Option:** Adds a 0.2 mm underside label layer to the 3MF geometry
 
 ### 2D Graphics (PNG/SVG)
 - **PNG (600 DPI):** High-resolution raster image perfect for paper printing
