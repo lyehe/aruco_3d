@@ -82,16 +82,18 @@ body {
     position: relative;
 }
 
-/* Sidebar Navigation */
+/* Mode Tabs */
 .mode-selector {
     background-color: var(--primary-gray);
-    width: var(--sidebar-width);
-    padding: var(--spacing-md) var(--spacing-sm);
+    width: 100%;
+    padding: var(--spacing-sm);
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: var(--spacing-sm);
-    overflow-y: auto;
+    overflow-x: auto;
+    overflow-y: hidden;
     flex-shrink: 0;
+    border-bottom: 1px solid var(--border-gray);
     transition: transform 0.3s ease;
 }
 
@@ -130,10 +132,12 @@ body {
     cursor: pointer;
     border-radius: var(--radius-sm);
     transition: all 0.2s ease;
-    text-align: left;
+    text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex: 1 1 0;
+    min-width: 0;
 }
 
 .mode-button:hover:not(.active) {
@@ -496,6 +500,15 @@ button:disabled {
         transform: translateX(-100%);
         z-index: 80;
         padding-top: calc(var(--header-height) + var(--spacing-lg));
+        flex-direction: column;
+        overflow-x: hidden;
+        overflow-y: auto;
+        border-bottom: none;
+    }
+
+    .mode-button {
+        flex: 0 0 auto;
+        text-align: left;
     }
     
     .mode-selector.mobile-open {

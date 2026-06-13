@@ -14,7 +14,6 @@
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/exporters/STLExporter.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/utils/BufferGeometryUtils.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/exporters/GLTFExporter.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,19 +33,19 @@
                 ☰
             </button>
 
-            <!-- Sidebar navigation -->
-            <nav class="mode-selector" id="mode-selector">
-                <button id="btn-mode-single" class="mode-button active">Single Marker</button>
-                <button id="btn-mode-array" class="mode-button">Marker Array</button>
-                <button id="btn-mode-charuco" class="mode-button">ChArUco Board</button>
-                <button id="btn-mode-qr" class="mode-button">QR Code</button>
-            </nav>
-
             <!-- Main content area -->
             <main class="main-content">
                 <div class="content-wrapper">
                     <!-- Form container -->
                     <div class="form-container">
+                        <!-- Mode tabs -->
+                        <nav class="mode-selector" id="mode-selector">
+                            <button id="btn-mode-single" class="mode-button active">Single Marker</button>
+                            <button id="btn-mode-array" class="mode-button">Marker Array</button>
+                            <button id="btn-mode-charuco" class="mode-button">ChArUco Board</button>
+                            <button id="btn-mode-qr" class="mode-button">QR Code</button>
+                        </nav>
+
                         <form class="setup">
                             <!-- Panel for Single Marker -->
                             <div id="panel-single" class="mode-panel active">
@@ -482,8 +481,7 @@
                                     STL</button>
                                 <button type="button" id="save-black-stl-button" class="button-primary">Save Black
                                     STL</button>
-                                <button type="button" id="save-glb-button" class="button-primary">Save Colored
-                                    GLB</button>
+                                <button type="button" id="save-3mf-button" class="button-primary">Save 3MF</button>
                                 <button type="button" id="save-png-button" class="button-primary">Save PNG (600 DPI)</button>
                                 <button type="button" id="save-svg-button" class="button-primary">Save SVG</button>
                                 <button type="button" id="export-metadata-button" class="button-primary">Export Metadata</button>

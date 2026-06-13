@@ -7,6 +7,7 @@ import { initSingleMarkerUI, updateSingleMarker, getSingleMarkerBaseFilename, ge
 import { initArrayMarkerUI, updateMarkerArray, prefillArrayIds as prefillArrayIds_array, getArrayBaseFilename, getColoredElementsFromArray, getArrayMetadataExport, getArrayParameters, getDictionaryInfo as getArrayDictionaryInfo } from './array-marker-handler.js';
 import { initCharucoUI, updateCharucoBoard, prefillCharucoIds as prefillCharucoIds_charuco, getCharucoBaseFilename, getColoredElementsFromCharuco, getCharucoMetadataExport, getCharucoParameters, getDictionaryInfo as getCharucoDictionaryInfo } from './charuco-board-handler.js';
 import { initQrCodeUI, updateQrCode, getQrCodeBaseFilename, getColoredElementsFromQr, getQrCodeMetadataExport, generateQrCodePNG, generateQrCodeSVG } from './qr-code-handler.js';
+import { exportThreeGroupTo3MF } from './3mf-exporter.js';
 
 let dict;
 let currentMode = 'single';
@@ -101,7 +102,7 @@ function triggerCurrentModeUpdate() {
 }
 
 function setAllSaveButtonsDisabled(disabled) {
-    const buttons = ['saveWhiteStl', 'saveBlackStl', 'saveGlb', 'savePng', 'saveSvg', 'exportMetadata'];
+    const buttons = ['saveWhiteStl', 'saveBlackStl', 'save3mf', 'savePng', 'saveSvg', 'exportMetadata'];
     buttons.forEach(btnName => {
         if (uiElements.buttons[btnName]) {
             uiElements.buttons[btnName].disabled = disabled;
@@ -168,21 +169,22 @@ function exportSTLColor(colorName) {
     }
 }
 
-function exportGLB() {
+function export3MF() {
     if (!mainObjectGroup || mainObjectGroup.children.length === 0) {
-        console.warn("No model generated to export for GLB.");
+        console.warn("No model generated to export for 3MF.");
         alert("No model generated to export.");
         return;
     }
 
-    mainObjectGroup.updateMatrixWorld(true);
-
-    const exporter = new THREE.GLTFExporter();
-    exporter.parse(mainObjectGroup, function (result) {
-        const blob = new Blob([result], { type: 'model/gltf-binary' });
-        const fileName = getCurrentModeBaseFilename() + '.glb';
-        triggerDownload(blob, fileName);
-    }, { binary: true });
+    try {
+        mainObjectGroup.updateMatrixWorld(true);
+        const baseFilename = getCurrentModeBaseFilename();
+        const blob = exportThreeGroupTo3MF(mainObjectGroup, baseFilename);
+        triggerDownload(blob, `${baseFilename}.3mf`);
+    } catch (error) {
+        console.error("Error exporting 3MF:", error);
+        alert("Error generating 3MF export: " + error.message);
+    }
 }
 
 // Helper function to calculate 600 DPI canvas size for given physical dimensions in mm
@@ -1343,7 +1345,7 @@ function collectUIElements() {
     uiElements.infoDisplay = document.querySelector('.info-display');
     uiElements.buttons.saveWhiteStl = document.getElementById('save-white-stl-button');
     uiElements.buttons.saveBlackStl = document.getElementById('save-black-stl-button');
-    uiElements.buttons.saveGlb = document.getElementById('save-glb-button');
+    uiElements.buttons.save3mf = document.getElementById('save-3mf-button');
     uiElements.buttons.savePng = document.getElementById('save-png-button');
     uiElements.buttons.saveSvg = document.getElementById('save-svg-button');
     uiElements.buttons.exportMetadata = document.getElementById('export-metadata-button');
@@ -1427,8 +1429,8 @@ function setupEventListeners() {
     if (uiElements.buttons.saveBlackStl) {
         uiElements.buttons.saveBlackStl.addEventListener('click', () => exportSTLColor('black'));
     }
-    if (uiElements.buttons.saveGlb) {
-        uiElements.buttons.saveGlb.addEventListener('click', exportGLB);
+    if (uiElements.buttons.save3mf) {
+        uiElements.buttons.save3mf.addEventListener('click', export3MF);
     }
     if (uiElements.buttons.savePng) {
         uiElements.buttons.savePng.addEventListener('click', exportPNG);
