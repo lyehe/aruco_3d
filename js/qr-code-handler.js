@@ -113,9 +113,15 @@ export function updateQrCode() {
 
             // Update info display with calculated dimensions
             const totalDimension = qrDimension + (2 * qrData.borderWidth);
-            const borderInfo = qrData.borderWidth > MIN_THICKNESS ? `, border: ${qrData.borderWidth}mm` : '';
+            const totalZ = qrData.extrusionType === "flat" ?
+                Math.max(qrData.z2, MIN_THICKNESS) :
+                qrData.z1 + qrData.z2;
+            const borderInfo = qrData.borderWidth > MIN_THICKNESS ? `. Border: ${qrData.borderWidth}mm` : '';
             onUpdateCallbacks_qr.setInfoMessage(
-                `QR Code: ${patternSize}×${patternSize} modules, ${moduleSize.toFixed(2)}mm per module${borderInfo}, total size: ${totalDimension.toFixed(1)}×${totalDimension.toFixed(1)}mm`
+                `QR: ${patternSize}x${patternSize} modules. ` +
+                `Total Z: ${totalZ.toFixed(2)}mm. ` +
+                `Square: ${moduleSize.toFixed(2)}mm. ` +
+                `Size: ${totalDimension.toFixed(1)}x${totalDimension.toFixed(1)}mm${borderInfo}`
             );
             onUpdateCallbacks_qr.setSaveDisabled(false);
         }).catch(error => {

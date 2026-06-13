@@ -317,13 +317,13 @@ function getMarkerInfo(params, dictInfo) {
 
     if (isSpecialMarker(params.markerId)) {
         const colorDesc = params.markerId === SPECIAL_MARKERS.PURE_WHITE ? "Pure White" : "Pure Black";
-        return `${colorDesc} Block - ${params.extrusionType} (${totalZ.toFixed(2)}mm). Size: ${params.dim}x${params.dim}mm`;
+        return `Marker: ${colorDesc} Block. Size: ${params.dim}x${params.dim}mm. Total Z: ${totalZ.toFixed(2)}mm`;
     }
 
     const markerModules = dictInfo.patternWidth + 2;
     const unitSquareSize = params.dim / markerModules;
 
-    return `ID ${params.markerId} (${dictInfo.name}) - ${params.extrusionType} (${totalZ.toFixed(2)}mm). Square: ${unitSquareSize.toFixed(2)}mm`;
+    return `Marker: ID ${params.markerId} (${dictInfo.name}). Total Z: ${totalZ.toFixed(2)}mm. Square: ${unitSquareSize.toFixed(2)}mm`;
 }
 
 export function getSingleMarkerBaseFilename() {

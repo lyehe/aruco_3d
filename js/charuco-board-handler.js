@@ -186,8 +186,9 @@ export function updateCharucoBoard() {
         );
 
         onUpdateCallbacks_charuco.setInfoMessage(
-            `ChArUco: ${params.squaresX}x${params.squaresY}, ` +
+            `ChArUco: ${params.squaresX}x${params.squaresY} of ${dictInfo.name}. ` +
             `Total Z: ${totalZ.toFixed(2)}mm. ` +
+            `Square: ${params.squareSize.toFixed(2)}mm. ` +
             `Markers: ${numWhiteSquares}`
         );
         onUpdateCallbacks_charuco.setSaveDisabled(false);

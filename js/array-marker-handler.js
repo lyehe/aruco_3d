@@ -193,12 +193,16 @@ export function updateMarkerArray() {
         const totalZ = params.extrusionType === "flat" ?
             Math.max(params.z2, MIN_THICKNESS) :
             params.z1 + params.z2;
+        const unitSquareSize = params.dim / (dictInfo.patternWidth + 2);
+        const borderInfo = params.gapFillType === 'border' ?
+            `. Indiv. Border: ${params.individualBorderWidth}mm` :
+            '';
 
         onUpdateCallbacks_array.setInfoMessage(
             `Array: ${params.gridX}x${params.gridY} of ${dictInfo.name}. ` +
-            `Gap: ${params.gap}mm. ` +
-            (params.gapFillType === 'border' ? `Indiv. Border: ${params.individualBorderWidth}mm. ` : '') +
-            `Total Z: ${totalZ.toFixed(2)}mm`
+            `Total Z: ${totalZ.toFixed(2)}mm. ` +
+            `Square: ${unitSquareSize.toFixed(2)}mm. ` +
+            `Gap: ${params.gap}mm${borderInfo}`
         );
         onUpdateCallbacks_array.setSaveDisabled(false);
 
