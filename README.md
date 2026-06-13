@@ -133,7 +133,7 @@ Marker dictionaries used in this project are sourced from the `arucogen` project
 ## License
 Copyright (c) [2025] [Yehe Liu]
 
-This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License.
-To view a copy of this license, visit [https://creativecommons.org/licenses/by-nc-nd/4.0/](https://creativecommons.org/licenses/by-nc-nd/4.0/)
+This project is licensed under the GNU Affero General Public License v3.0 only (AGPL-3.0-only).
+Commercial use is permitted under the license terms. See [LICENSE](LICENSE) for details.
 
---- 
+---
