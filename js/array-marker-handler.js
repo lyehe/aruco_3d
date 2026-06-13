@@ -641,18 +641,6 @@ export function getArrayBaseFilename() {
     return filename;
 }
 
-export function getColoredElementsFromArray(targetMaterial) {
-    const coloredGroup = new THREE.Group();
-    mainObjectGroup_array.traverse((object) => {
-        if (object.isMesh && object.material === targetMaterial) {
-            const newMesh = new THREE.Mesh(object.geometry.clone(), object.material);
-            newMesh.geometry.applyMatrix4(object.matrixWorld);
-            coloredGroup.add(newMesh);
-        }
-    });
-    return coloredGroup;
-}
-
 export function getArrayMetadataExport() {
     const params = getArrayParameters();
     const dictInfo = getDictionaryInfo();

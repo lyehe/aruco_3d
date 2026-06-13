@@ -290,34 +290,40 @@ function getBorderConfig(params) {
     return { baseMaterial, featureMaterial, baseHeight, featureHeight };
 }
 
-function getMarkerInfo(params, dictInfo) {
-    let totalZ;
-
+function calculateSingleMarkerTotalZ(params) {
     if (isSpecialMarker(params.markerId)) {
-        // Calculate actual Z for special markers
         if (params.extrusionType === "flat") {
-            totalZ = Math.max(params.z2, MIN_THICKNESS);
-        } else {
-            const baseIsWhite = params.extrusionType === "positive";
-            const markerIsWhite = params.markerId === SPECIAL_MARKERS.PURE_WHITE;
-            const suppressFeature = (baseIsWhite === markerIsWhite);
-
-            const actualZ1 = Math.max(params.z1, 0);
-            const actualZ2 = suppressFeature ? 0 : Math.max(params.z2, 0);
-
-            totalZ = (actualZ1 < MIN_THICKNESS && actualZ2 < MIN_THICKNESS) ?
-                MIN_THICKNESS : actualZ1 + actualZ2;
+            return Math.max(params.z2, MIN_THICKNESS);
         }
 
-        const colorDesc = params.markerId === SPECIAL_MARKERS.PURE_WHITE ? "Pure White" : "Pure Black";
-        return `${colorDesc} Block (${params.extrusionType}) - ${params.dim}x${params.dim}x${totalZ.toFixed(2)}mm`;
-    } else {
-        totalZ = params.extrusionType === "flat" ?
-            Math.max(params.z2, MIN_THICKNESS) :
-            params.z1 + params.z2;
+        const baseIsWhite = params.extrusionType === "positive";
+        const markerIsWhite = params.markerId === SPECIAL_MARKERS.PURE_WHITE;
+        const suppressFeature = (baseIsWhite === markerIsWhite);
 
-        return `ID ${params.markerId} (${dictInfo.name}) - ${params.extrusionType} (${totalZ.toFixed(2)}mm)`;
+        const actualZ1 = Math.max(params.z1, 0);
+        const actualZ2 = suppressFeature ? 0 : Math.max(params.z2, 0);
+
+        return (actualZ1 < MIN_THICKNESS && actualZ2 < MIN_THICKNESS) ?
+            MIN_THICKNESS : actualZ1 + actualZ2;
     }
+
+    return params.extrusionType === "flat" ?
+        Math.max(params.z2, MIN_THICKNESS) :
+        params.z1 + params.z2;
+}
+
+function getMarkerInfo(params, dictInfo) {
+    const totalZ = calculateSingleMarkerTotalZ(params);
+
+    if (isSpecialMarker(params.markerId)) {
+        const colorDesc = params.markerId === SPECIAL_MARKERS.PURE_WHITE ? "Pure White" : "Pure Black";
+        return `${colorDesc} Block - ${params.extrusionType} (${totalZ.toFixed(2)}mm). Size: ${params.dim}x${params.dim}mm`;
+    }
+
+    const markerModules = dictInfo.patternWidth + 2;
+    const unitSquareSize = params.dim / markerModules;
+
+    return `ID ${params.markerId} (${dictInfo.name}) - ${params.extrusionType} (${totalZ.toFixed(2)}mm). Square: ${unitSquareSize.toFixed(2)}mm`;
 }
 
 export function getSingleMarkerBaseFilename() {
@@ -348,30 +354,7 @@ export function getSingleMarkerBaseFilename() {
 }
 
 function calculateTotalZ(params) {
-    if (isSpecialMarker(params.markerId)) {
-        // Extract Z from the info message
-        const info = getMarkerInfo(params, {});
-        const match = info.match(/(\d+\.\d+)mm/);
-        return match ? parseFloat(match[1]) : 0;
-    }
-
-    return params.extrusionType === "flat" ?
-        Math.max(params.z2, MIN_THICKNESS) :
-        params.z1 + params.z2;
-}
-
-export function getColoredElementsFromSingle(targetMaterial) {
-    const coloredGroup = new THREE.Group();
-
-    mainObjectGroup_single.traverse((object) => {
-        if (object.isMesh && object.material === targetMaterial) {
-            const newMesh = new THREE.Mesh(object.geometry.clone(), object.material);
-            newMesh.geometry.applyMatrix4(object.matrixWorld);
-            coloredGroup.add(newMesh);
-        }
-    });
-
-    return coloredGroup;
+    return calculateSingleMarkerTotalZ(params);
 }
 
 export function getSingleMarkerMetadataExport() {

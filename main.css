@@ -401,7 +401,7 @@ button:disabled {
     flex-wrap: wrap;
 }
 
-#stl-preview-container {
+#model-preview-container {
     flex: 1;
     padding: var(--spacing-md);
     display: flex;
@@ -410,7 +410,7 @@ button:disabled {
     min-height: 200px;
 }
 
-#stl-preview {
+#model-preview {
     flex: 1;
     background-color: var(--light-gray);
     border-radius: var(--radius-sm);
@@ -566,7 +566,7 @@ button:disabled {
         padding: var(--spacing-xs) var(--spacing-sm);
     }
     
-    #stl-preview-container {
+    #model-preview-container {
         padding: var(--spacing-sm);
         min-height: 150px;
     }
@@ -628,7 +628,7 @@ button:disabled {
         border: 1px solid var(--border-gray);
     }
     
-    #stl-preview-container {
+    #model-preview-container {
         padding: 20px;
     }
 }

@@ -388,22 +388,6 @@ export function getQrCodeBaseFilename() {
     return `QR_${safeContent}`;
 }
 
-export function getColoredElementsFromQr(targetMaterial) {
-    const coloredGroup = new THREE.Group();
-
-    // Recursively traverse the entire QR object hierarchy to find matching meshes
-    mainObjectGroup_qr.traverse((object) => {
-        if (object.isMesh && object.material === targetMaterial) {
-            // Clone the mesh with proper world transformation
-            const newMesh = new THREE.Mesh(object.geometry.clone(), object.material);
-            newMesh.geometry.applyMatrix4(object.matrixWorld);
-            coloredGroup.add(newMesh);
-        }
-    });
-
-    return coloredGroup;
-}
-
 export function getQrCodeMetadataExport() {
     const qrData = getQrCodeParameters();
     if (!qrData.valid) return null;

@@ -433,19 +433,6 @@ export function getCharucoBaseFilename() {
         `${params.extrusionType}_z${totalZ.toFixed(2)}mm`;
 }
 
-export function getColoredElementsFromCharuco(targetMaterial) {
-    const coloredGroup = new THREE.Group();
-
-    mainObjectGroup_charuco.traverse((object) => {
-        if (object.isMesh && object.material === targetMaterial) {
-            const newMesh = new THREE.Mesh(object.geometry.clone(), object.material);
-            newMesh.geometry.applyMatrix4(object.matrixWorld);
-            coloredGroup.add(newMesh);
-        }
-    });
-
-    return coloredGroup;
-}
 export function getCharucoMetadataExport() {
     const params = getCharucoParameters();
     const dictInfo = getDictionaryInfo();

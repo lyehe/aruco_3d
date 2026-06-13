@@ -32,18 +32,14 @@ A comprehensive web-based tool to generate 3D printable patterns and 2D vector g
 
 ### Export Formats
 *   **3D Models:**
-    *   STL files (separate white/black parts for multi-color printing)
-    *   Colored GLB files (single file with materials)
+    *   3MF files with separate white/black model parts for multi-filament printing
 *   **2D Graphics:**
     *   High-resolution PNG (600 DPI) - perfect for paper printing
     *   Scalable SVG vectors - ideal for laser cutting and plotting
 *   **Metadata** - JSON files with marker specifications and parameters
 
 ### Configuration Management
-*   **YAML Export/Import** - Full configuration files for project management
 *   **URL Sharing** - Share exact configurations via shareable links
-*   **Compressed Configs** - Human-readable single-line configuration strings
-*   **Copy/Paste Configs** - Quick configuration sharing via clipboard
 
 ### Interface Features
 *   **Interactive 3D Preview** - Real-time visualization using Three.js
@@ -62,17 +58,17 @@ Share specific configurations by adding parameters to the URL:
 https://lyehe.github.io/aruco_3d/?config=single:dict=4x4_1000,id=123,size=50,border=5,base=2,height=1,ext=positive
 ```
 
-### Human-Readable Config Strings
+### URL Config Examples
 - **Single Marker:** `single:dict=5x5_1000,id=42,size=75,border=10,ext=negative`
 - **QR Code:** `qr:content=Hello%20World,size=100,border=15,error=H,ext=flat`
 - **Array:** `array:dict=4x4_1000,grid=3x2,gap=5,size=40,ids=10+11+12+13+14+15`
 - **ChArUco:** `charuco:dict=6x6_1000,board=8x6,square=60,margin=5,ext=positive`
 
 ### Common Workflows
-1. **3D Printing:** Configure marker → Export STL files → Print white and black parts separately
+1. **3D Printing:** Configure marker → Export 3MF → Assign white and black filaments in your slicer
 2. **Laser Cutting:** Configure pattern → Export SVG → Cut from acrylic or wood
 3. **Paper Printing:** Configure marker → Export PNG (600 DPI) → Print on high-quality paper
-4. **Team Collaboration:** Configure → Copy share URL → Team members open same configuration
+4. **Team Collaboration:** Configure → Share Config URL → Team members open same configuration
 
 ## 3D Printing Instructions and Tips
 1.  Use black and white filaments. PLA or PLA+ is recommended for the best stiffness. The quality of the print is dependent on the quality of the filament and 3D printer.
@@ -88,10 +84,8 @@ https://lyehe.github.io/aruco_3d/?config=single:dict=4x4_1000,id=123,size=50,bor
 
 ## Export Format Guide
 
-### 3D Models (STL/GLB)
-- **White STL:** Contains only white/light-colored parts for 3D printing
-- **Black STL:** Contains only black/dark-colored parts for 3D printing  
-- **Colored GLB:** Combined model with materials for visualization and single-file workflows
+### 3D Models (3MF)
+- **3MF:** Combined printable model with separate `white` and `black` parts for multi-filament slicers
 
 ### 2D Graphics (PNG/SVG)
 - **PNG (600 DPI):** High-resolution raster image perfect for paper printing
@@ -102,9 +96,8 @@ https://lyehe.github.io/aruco_3d/?config=single:dict=4x4_1000,id=123,size=50,bor
   - Infinite scalability without quality loss
   - Includes real-world measurements in millimeters
 
-### Configuration Files
-- **YAML Config:** Human-readable full configuration with metadata
-- **Compressed Config:** Single-line format for easy sharing and URL embedding
+### Configuration
+- **Share URL:** Encodes the current configuration in the page URL
 - **JSON Metadata:** Technical specifications and parameters for documentation
 
 ## New Features in Latest Version
@@ -117,9 +110,6 @@ https://lyehe.github.io/aruco_3d/?config=single:dict=4x4_1000,id=123,size=50,bor
 
 ### Advanced Configuration Sharing
 - **URL Parameters:** Share exact configurations via web links
-- **Human-Readable Strings:** Easy-to-understand configuration format
-- **Copy/Paste Workflow:** Quick configuration sharing between team members
-- **YAML Import/Export:** Professional project file management
 
 ### Enhanced Export Options
 - **SVG Vector Export:** Professional-grade scalable graphics for manufacturing

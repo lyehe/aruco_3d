@@ -7,15 +7,13 @@
     <link rel="stylesheet" href="main.css" />
     <meta name="description" content="Online 3D ArUco and ChArUco Pattern Generator for printing">
     <meta name="keywords"
-        content="ArUco, ChArUco, AprilTag, OpenCV, april, tag, marker, array, grid, checkerboard, board, dictionary, family, print, stl, 3d printing, computer vision, robotics">
+        content="ArUco, ChArUco, AprilTag, OpenCV, april, tag, marker, array, grid, checkerboard, board, dictionary, family, print, 3mf, 3d printing, computer vision, robotics">
     <title>Online 3D Marker Pattern Generator</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath d='M0 0h16v16H0z' fill='%23fff'/%3e%3cpath d='M0 0h6v6H0zm10 0h6v6h-6zM0 10h6v6H0zm10 10h6v6h-6z' fill='%23000'/%3e%3c/svg%3e">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/exporters/STLExporter.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/utils/BufferGeometryUtils.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Jersey+25&display=swap" rel="stylesheet">
@@ -40,10 +38,10 @@
                     <div class="form-container">
                         <!-- Mode tabs -->
                         <nav class="mode-selector" id="mode-selector">
-                            <button id="btn-mode-single" class="mode-button active">Single Marker</button>
-                            <button id="btn-mode-array" class="mode-button">Marker Array</button>
-                            <button id="btn-mode-charuco" class="mode-button">ChArUco Board</button>
-                            <button id="btn-mode-qr" class="mode-button">QR Code</button>
+                            <button id="btn-mode-single" class="mode-button active">Marker</button>
+                            <button id="btn-mode-array" class="mode-button">Array</button>
+                            <button id="btn-mode-charuco" class="mode-button">ChArUco</button>
+                            <button id="btn-mode-qr" class="mode-button">QR</button>
                         </nav>
 
                         <form class="setup">
@@ -477,24 +475,15 @@
                         <div class="preview-header">
                             <div class="info-display"></div>
                             <div class="tools">
-                                <button type="button" id="save-white-stl-button" class="button-primary">Save White
-                                    STL</button>
-                                <button type="button" id="save-black-stl-button" class="button-primary">Save Black
-                                    STL</button>
-                                <button type="button" id="save-3mf-button" class="button-primary">Save 3MF</button>
-                                <button type="button" id="save-png-button" class="button-primary">Save PNG (600 DPI)</button>
-                                <button type="button" id="save-svg-button" class="button-primary">Save SVG</button>
-                                <button type="button" id="export-metadata-button" class="button-primary">Export Metadata</button>
-                                <button type="button" id="export-config-button" class="button-secondary">Export Config</button>
-                                <button type="button" id="import-config-button" class="button-secondary">Import Config</button>
-                                <button type="button" id="share-url-button" class="button-secondary">Share URL</button>
-                                <button type="button" id="copy-compressed-button" class="button-secondary">Copy Config</button>
-                                <button type="button" id="import-compressed-button" class="button-secondary">Paste Config</button>
-                                <input type="file" id="config-file-input" accept=".yaml,.yml" style="display: none;">
+                                <button type="button" id="save-3mf-button" class="button-primary">3MF</button>
+                                <button type="button" id="save-png-button" class="button-primary">PNG</button>
+                                <button type="button" id="save-svg-button" class="button-primary">SVG</button>
+                                <button type="button" id="export-metadata-button" class="button-primary">Metadata</button>
+                                <button type="button" id="share-url-button" class="button-secondary">Config URL</button>
                             </div>
                         </div>
-                        <div id="stl-preview-container">
-                            <div id="stl-preview"></div>
+                        <div id="model-preview-container">
+                            <div id="model-preview"></div>
                         </div>
                     </div>
                 </div>

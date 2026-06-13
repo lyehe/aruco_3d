@@ -1,12 +1,11 @@
 import { scene } from './three-setup.js';
 import { setDict as setArucoUtilDict, getArucoBitPattern, isSpecialMarker } from './aruco-utils.js';
-import { blackMaterial, whiteMaterial } from './config.js';
 import { triggerDownload } from './ui-common-utils.js';
 import { disposeGroup } from './geometry-utils.js';
-import { initSingleMarkerUI, updateSingleMarker, getSingleMarkerBaseFilename, getColoredElementsFromSingle, getSingleMarkerMetadataExport } from './single-marker-handler.js';
-import { initArrayMarkerUI, updateMarkerArray, prefillArrayIds as prefillArrayIds_array, getArrayBaseFilename, getColoredElementsFromArray, getArrayMetadataExport, getArrayParameters, getDictionaryInfo as getArrayDictionaryInfo } from './array-marker-handler.js';
-import { initCharucoUI, updateCharucoBoard, prefillCharucoIds as prefillCharucoIds_charuco, getCharucoBaseFilename, getColoredElementsFromCharuco, getCharucoMetadataExport, getCharucoParameters, getDictionaryInfo as getCharucoDictionaryInfo } from './charuco-board-handler.js';
-import { initQrCodeUI, updateQrCode, getQrCodeBaseFilename, getColoredElementsFromQr, getQrCodeMetadataExport, generateQrCodePNG, generateQrCodeSVG } from './qr-code-handler.js';
+import { initSingleMarkerUI, updateSingleMarker, getSingleMarkerBaseFilename, getSingleMarkerMetadataExport } from './single-marker-handler.js';
+import { initArrayMarkerUI, updateMarkerArray, prefillArrayIds as prefillArrayIds_array, getArrayBaseFilename, getArrayMetadataExport, getArrayParameters, getDictionaryInfo as getArrayDictionaryInfo } from './array-marker-handler.js';
+import { initCharucoUI, updateCharucoBoard, prefillCharucoIds as prefillCharucoIds_charuco, getCharucoBaseFilename, getCharucoMetadataExport, getCharucoParameters, getDictionaryInfo as getCharucoDictionaryInfo } from './charuco-board-handler.js';
+import { initQrCodeUI, updateQrCode, getQrCodeBaseFilename, getQrCodeMetadataExport, generateQrCodePNG, generateQrCodeSVG } from './qr-code-handler.js';
 import { exportThreeGroupTo3MF } from './3mf-exporter.js';
 
 let dict;
@@ -102,7 +101,7 @@ function triggerCurrentModeUpdate() {
 }
 
 function setAllSaveButtonsDisabled(disabled) {
-    const buttons = ['saveWhiteStl', 'saveBlackStl', 'save3mf', 'savePng', 'saveSvg', 'exportMetadata'];
+    const buttons = ['save3mf', 'savePng', 'saveSvg', 'exportMetadata'];
     buttons.forEach(btnName => {
         if (uiElements.buttons[btnName]) {
             uiElements.buttons[btnName].disabled = disabled;
@@ -123,49 +122,6 @@ function getCurrentModeBaseFilename() {
         default:
             console.warn("Unknown mode for filename:", currentMode);
             return 'export';
-    }
-}
-
-function exportSTLColor(colorName) {
-    if (!mainObjectGroup || mainObjectGroup.children.length === 0) {
-        console.warn("No model to process for STL color export.");
-        alert("No model generated to export.");
-        return;
-    }
-
-    mainObjectGroup.updateMatrixWorld(true);
-    const targetMaterial = colorName === 'white' ? whiteMaterial : blackMaterial;
-
-    let colorGroup;
-    switch (currentMode) {
-        case 'single':
-            colorGroup = getColoredElementsFromSingle(targetMaterial);
-            break;
-        case 'array':
-            colorGroup = getColoredElementsFromArray(targetMaterial);
-            break;
-        case 'charuco':
-            colorGroup = getColoredElementsFromCharuco(targetMaterial);
-            break;
-        case 'qr':
-            colorGroup = getColoredElementsFromQr(targetMaterial);
-            break;
-        default:
-            console.error("ExportSTLColor: Unknown mode - ", currentMode);
-            return;
-    }
-
-    if (colorGroup && colorGroup.children.length > 0) {
-        const exporter = new THREE.STLExporter();
-        const stlString = exporter.parse(colorGroup, { binary: false });
-        const baseFilename = getCurrentModeBaseFilename();
-        const blob = new Blob([stlString], { type: 'model/stl' });
-        triggerDownload(blob, `${baseFilename}_${colorName}.stl`);
-
-        // Clean up the temporary color group
-        disposeGroup(colorGroup);
-    } else {
-        alert(`No ${colorName} elements found in the current ${currentMode} model to export.`);
     }
 }
 
@@ -348,7 +304,7 @@ function generateArrayMarkerPNG() {
 
 function generateCharucoPNG() {
     // For now, throw a helpful error message  
-    throw new Error("ChArUco PNG export will be implemented in a future update. Use STL export for now.");
+    throw new Error("ChArUco PNG export will be implemented in a future update. Use 3MF export for 3D printing.");
 }
 
 function exportPNG() {
@@ -797,26 +753,6 @@ function exportSVG() {
     }
 }
 
-function exportConfig() {
-    try {
-        const config = getCurrentConfiguration();
-        const yamlString = jsyaml.dump(config, {
-            indent: 2,
-            lineWidth: 120,
-            noRefs: true
-        });
-        
-        const blob = new Blob([yamlString], { type: 'text/yaml' });
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
-        const filename = `aruco-config-${currentMode}-${timestamp}.yaml`;
-        triggerDownload(blob, filename);
-        
-    } catch (error) {
-        console.error("Error exporting configuration:", error);
-        alert("Error generating configuration export: " + error.message);
-    }
-}
-
 // Compress configuration to a human-readable single line format
 function compressConfig() {
     try {
@@ -1023,45 +959,6 @@ function generateShareURL() {
     });
 }
 
-// Copy compressed config to clipboard
-function copyCompressedConfig() {
-    const compressed = compressConfig();
-    if (!compressed) {
-        alert("Error generating compressed config");
-        return;
-    }
-    
-    navigator.clipboard.writeText(compressed).then(() => {
-        const shortConfig = compressed.length > 50 ? compressed.substring(0, 47) + '...' : compressed;
-        alert(`Compressed config copied to clipboard!\n\n${shortConfig}\n\nPaste this into the "Import Compressed Config" field to restore settings.`);
-    }).catch(() => {
-        // Fallback for browsers without clipboard API
-        prompt("Copy this compressed config:", compressed);
-    });
-}
-
-// Import from compressed config string
-function importCompressedConfig() {
-    const compressedConfig = prompt("Paste compressed configuration string:");
-    if (!compressedConfig || compressedConfig.trim() === '') {
-        return;
-    }
-    
-    try {
-        const config = decompressConfig(compressedConfig.trim());
-        if (!config) {
-            throw new Error('Invalid compressed configuration format');
-        }
-        
-        applyConfiguration(config);
-        alert(`Configuration imported successfully!\nMode: ${config.mode}\nCompressed size: ${compressedConfig.length} characters`);
-        
-    } catch (error) {
-        console.error("Error importing compressed configuration:", error);
-        alert("Error importing compressed configuration: " + error.message);
-    }
-}
-
 // Load configuration from URL parameter
 function loadConfigFromURL() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -1081,42 +978,6 @@ function loadConfigFromURL() {
             alert("Invalid configuration in URL parameter");
         }
     }
-}
-
-function importConfig() {
-    // Trigger file input click
-    if (uiElements.inputs.configFile) {
-        uiElements.inputs.configFile.click();
-    }
-}
-
-function handleConfigFileImport(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const yamlContent = e.target.result;
-            const config = jsyaml.load(yamlContent);
-            
-            if (!config || typeof config !== 'object') {
-                throw new Error('Invalid configuration file format');
-            }
-            
-            applyConfiguration(config);
-            alert(`Configuration imported successfully!\nMode: ${config.mode || 'unknown'}\nGenerated: ${config.generatedAt || 'unknown'}`);
-            
-        } catch (error) {
-            console.error("Error importing configuration:", error);
-            alert("Error importing configuration: " + error.message);
-        }
-        
-        // Reset file input
-        event.target.value = '';
-    };
-    
-    reader.readAsText(file);
 }
 
 function getCurrentConfiguration() {
@@ -1343,18 +1204,11 @@ function collectUIElements() {
 
     // Common elements
     uiElements.infoDisplay = document.querySelector('.info-display');
-    uiElements.buttons.saveWhiteStl = document.getElementById('save-white-stl-button');
-    uiElements.buttons.saveBlackStl = document.getElementById('save-black-stl-button');
     uiElements.buttons.save3mf = document.getElementById('save-3mf-button');
     uiElements.buttons.savePng = document.getElementById('save-png-button');
     uiElements.buttons.saveSvg = document.getElementById('save-svg-button');
     uiElements.buttons.exportMetadata = document.getElementById('export-metadata-button');
-    uiElements.buttons.exportConfig = document.getElementById('export-config-button');
-    uiElements.buttons.importConfig = document.getElementById('import-config-button');
     uiElements.buttons.shareUrl = document.getElementById('share-url-button');
-    uiElements.buttons.copyCompressed = document.getElementById('copy-compressed-button');
-    uiElements.buttons.importCompressed = document.getElementById('import-compressed-button');
-    uiElements.inputs.configFile = document.getElementById('config-file-input');
 
     // Single marker elements
     uiElements.selects.single.dict = document.getElementById('frm-single-dict');
@@ -1423,12 +1277,6 @@ function setupEventListeners() {
     }
 
     // Export buttons
-    if (uiElements.buttons.saveWhiteStl) {
-        uiElements.buttons.saveWhiteStl.addEventListener('click', () => exportSTLColor('white'));
-    }
-    if (uiElements.buttons.saveBlackStl) {
-        uiElements.buttons.saveBlackStl.addEventListener('click', () => exportSTLColor('black'));
-    }
     if (uiElements.buttons.save3mf) {
         uiElements.buttons.save3mf.addEventListener('click', export3MF);
     }
@@ -1441,23 +1289,8 @@ function setupEventListeners() {
     if (uiElements.buttons.exportMetadata) {
         uiElements.buttons.exportMetadata.addEventListener('click', exportMetadata);
     }
-    if (uiElements.buttons.exportConfig) {
-        uiElements.buttons.exportConfig.addEventListener('click', exportConfig);
-    }
-    if (uiElements.buttons.importConfig) {
-        uiElements.buttons.importConfig.addEventListener('click', importConfig);
-    }
     if (uiElements.buttons.shareUrl) {
         uiElements.buttons.shareUrl.addEventListener('click', generateShareURL);
-    }
-    if (uiElements.buttons.copyCompressed) {
-        uiElements.buttons.copyCompressed.addEventListener('click', copyCompressedConfig);
-    }
-    if (uiElements.buttons.importCompressed) {
-        uiElements.buttons.importCompressed.addEventListener('click', importCompressedConfig);
-    }
-    if (uiElements.inputs.configFile) {
-        uiElements.inputs.configFile.addEventListener('change', handleConfigFileImport);
     }
 }
 

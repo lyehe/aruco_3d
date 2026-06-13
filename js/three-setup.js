@@ -1,7 +1,7 @@
 export let scene, camera, renderer, controls;
 
 export function initThree() {
-    const previewDiv = document.getElementById('stl-preview');
+    const previewDiv = document.getElementById('model-preview');
     const width = previewDiv.clientWidth;
     const height = previewDiv.clientHeight;
 
@@ -48,4 +48,4 @@ export function initThree() {
         camera.updateProjectionMatrix();
         renderer.setSize(newWidth, newHeight);
     });
-} 
+}
