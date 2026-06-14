@@ -1,7 +1,6 @@
 import { generateMarkerMesh, MIN_THICKNESS } from './aruco-utils.js';
 import { validateDimensions, createBoxAt, mergeAndDisposeGeometries } from './geometry-utils.js';
 import { blackMaterial, whiteMaterial } from './config.js';
-import { BOTTOM_LABEL_DEPTH, createEngravedLabelPlate, getBottomLabelMaterial } from './bottom-label-utils.js';
 
 let uiElements_qr;
 let mainObjectGroup_qr;
@@ -19,8 +18,7 @@ export function initQrCodeUI(uiElements, mainGroup, onUpdate) {
         uiElements_qr.inputs.qr.dim,
         uiElements_qr.inputs.qr.borderWidth,
         uiElements_qr.inputs.qr.z1,
-        uiElements_qr.inputs.qr.z2,
-        uiElements_qr.inputs.qr.bottomLabel
+        uiElements_qr.inputs.qr.z2
     ];
 
     updateTriggers.forEach(element => {
@@ -108,21 +106,6 @@ export function updateQrCode() {
                 }
             }
 
-            if (qrData.bottomLabel) {
-                const totalDimension = qrDimension + (2 * qrData.borderWidth);
-                const labelMesh = createEngravedLabelPlate({
-                    text: `QR ${patternSize}x${patternSize} ${qrData.errorCorrection}`,
-                    width: totalDimension,
-                    height: totalDimension,
-                    material: getBottomLabelMaterial(qrData.extrusionType),
-                    name: 'bottom_label_qr'
-                });
-
-                if (labelMesh) {
-                    finalGroup.add(labelMesh);
-                }
-            }
-
             if (finalGroup) {
                 finalGroup.name = 'QR_Code';
                 mainObjectGroup_qr.add(finalGroup);
@@ -133,7 +116,7 @@ export function updateQrCode() {
             const totalZ = qrData.extrusionType === "flat" ?
                 Math.max(qrData.z2, MIN_THICKNESS) :
                 qrData.z1 + qrData.z2;
-            const printedTotalZ = totalZ + (qrData.bottomLabel ? BOTTOM_LABEL_DEPTH : 0);
+            const printedTotalZ = totalZ;
             const borderInfo = qrData.borderWidth > MIN_THICKNESS ?
                 `. Border: ${qrData.borderWidth.toFixed(2)}mm` :
                 '';
@@ -141,8 +124,7 @@ export function updateQrCode() {
                 `QR: ${patternSize}x${patternSize} modules. ` +
                 `Size: ${totalDimension.toFixed(2)}x${totalDimension.toFixed(2)}mm. ` +
                 `Square: ${moduleSize.toFixed(2)}mm. ` +
-                `Total Z: ${printedTotalZ.toFixed(2)}mm${borderInfo}` +
-                (qrData.bottomLabel ? `. Label: ${BOTTOM_LABEL_DEPTH.toFixed(2)}mm` : '')
+                `Total Z: ${printedTotalZ.toFixed(2)}mm${borderInfo}`
             );
             onUpdateCallbacks_qr.setSaveDisabled(false);
         }).catch(error => {
@@ -165,7 +147,6 @@ export function getQrCodeParameters() {
     const borderWidth = parseFloat(uiElements_qr.inputs.qr.borderWidth?.value) || 0;
     const z1 = parseFloat(uiElements_qr.inputs.qr.z1?.value) || 2;
     const z2 = parseFloat(uiElements_qr.inputs.qr.z2?.value) || 1;
-    const bottomLabel = uiElements_qr.inputs.qr.bottomLabel?.checked || false;
     
     // Get selected extrusion type
     let extrusionType = 'positive';
@@ -198,8 +179,7 @@ export function getQrCodeParameters() {
         borderWidth,
         z1,
         z2,
-        extrusionType,
-        bottomLabel
+        extrusionType
     };
 }
 
@@ -414,7 +394,7 @@ export function getQrCodeBaseFilename() {
     const content = uiElements_qr.textareas.qr.content?.value?.trim() || 'qrcode';
     // Create safe filename from content
     const safeContent = content.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20);
-    return `QR_${safeContent}${uiElements_qr.inputs.qr.bottomLabel?.checked ? '_bottomLabel' : ''}`;
+    return `QR_${safeContent}`;
 }
 
 export function getQrCodeMetadataExport() {
@@ -428,11 +408,9 @@ export function getQrCodeMetadataExport() {
         dimensions: {
             qrCodeSize: qrData.dimension,
             baseHeight: qrData.z1,
-            featureHeight: qrData.z2,
-            bottomLabelDepth: qrData.bottomLabel ? BOTTOM_LABEL_DEPTH : 0
+            featureHeight: qrData.z2
         },
         extrusionType: qrData.extrusionType,
-        bottomLabel: qrData.bottomLabel,
         generatedAt: new Date().toISOString()
     };
 }

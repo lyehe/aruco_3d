@@ -178,6 +178,7 @@ function collectCuboids(root) {
         const geometry = object.geometry;
         const position = geometry.attributes.position;
         const layout = getChunkLayout(geometry);
+
         if (!layout || layout.count === 0) {
             console.warn('Skipping non-box mesh during 3MF export:', object.name || object.uuid);
             return;

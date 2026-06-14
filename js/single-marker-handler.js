@@ -2,7 +2,6 @@ import { generateMarkerMesh, getArucoBitPattern, validateMarkerId, isSpecialMark
 import { blackMaterial, whiteMaterial } from './config.js';
 import { getMaxIdFromSelect } from './ui-common-utils.js';
 import { mergeAndDisposeGeometries, createBoxAt, disposeGroup, validateDimensions } from './geometry-utils.js';
-import { BOTTOM_LABEL_DEPTH, createEngravedLabelPlate, getBottomLabelMaterial, getMarkerBaseColor, getMarkerBottomLabelText } from './bottom-label-utils.js';
 
 let uiElements_single;
 let dictionaryData_single;
@@ -23,7 +22,6 @@ export function initSingleMarkerUI(uiElements, dict, mainGroup, onUpdate) {
         uiElements_single.inputs.single.z1,
         uiElements_single.inputs.single.z2,
         uiElements_single.inputs.single.borderWidth,
-        uiElements_single.inputs.single.bottomLabel
     ];
 
     updateTriggers.forEach(element => {
@@ -53,8 +51,7 @@ export function updateSingleMarker() {
         extrusionType: document.querySelector('input[name="single_extrusion"]:checked').value,
         borderWidth: Number(uiElements_single.inputs.single.borderWidth.value),
         borderCornerType: document.querySelector('input[name="single_borderCornerType"]:checked').value,
-        markerId: Number(uiElements_single.inputs.single.id.value),
-        bottomLabel: uiElements_single.inputs.single.bottomLabel?.checked || false
+        markerId: Number(uiElements_single.inputs.single.id.value)
     };
 
     // Get dictionary info
@@ -146,26 +143,6 @@ function generateSingleMarker(params, dictInfo) {
     const markerGroup = params.borderWidth > MIN_THICKNESS ?
         createMarkerWithBorder(coreMarkerGroup, params) :
         coreMarkerGroup;
-
-    if (params.bottomLabel) {
-        const totalDim = params.dim + 2 * params.borderWidth;
-        const labelText = getMarkerBottomLabelText(dictInfo.name, params.markerId);
-        const labelMaterial = getBottomLabelMaterial(
-            params.extrusionType,
-            getMarkerBaseColor(params.markerId, params.extrusionType)
-        );
-        const labelMesh = createEngravedLabelPlate({
-            text: labelText,
-            width: totalDim,
-            height: totalDim,
-            material: labelMaterial,
-            name: 'bottom_label_marker'
-        });
-
-        if (labelMesh) {
-            markerGroup.add(labelMesh);
-        }
-    }
 
     return markerGroup;
 }
@@ -337,19 +314,18 @@ function calculateSingleMarkerTotalZ(params) {
 
 function getMarkerInfo(params, dictInfo) {
     const totalZ = calculateSingleMarkerTotalZ(params);
-    const printedTotalZ = totalZ + (params.bottomLabel ? BOTTOM_LABEL_DEPTH : 0);
+    const printedTotalZ = totalZ;
     const totalDim = params.dim + 2 * params.borderWidth;
     const borderInfo = params.borderWidth > MIN_THICKNESS ?
         `. Border: ${params.borderWidth.toFixed(2)}mm` :
         '';
-    const labelInfo = params.bottomLabel ? `. Label: ${BOTTOM_LABEL_DEPTH.toFixed(2)}mm` : '';
 
     if (isSpecialMarker(params.markerId)) {
         const colorDesc = params.markerId === SPECIAL_MARKERS.PURE_WHITE ? "Pure White" : "Pure Black";
         return `Marker: ${colorDesc} Block. ` +
             `Size: ${totalDim.toFixed(2)}x${totalDim.toFixed(2)}mm. ` +
             `Square: ${params.dim.toFixed(2)}mm. ` +
-            `Total Z: ${printedTotalZ.toFixed(2)}mm${borderInfo}${labelInfo}`;
+            `Total Z: ${printedTotalZ.toFixed(2)}mm${borderInfo}`;
     }
 
     const markerModules = dictInfo.patternWidth + 2;
@@ -358,7 +334,7 @@ function getMarkerInfo(params, dictInfo) {
     return `Marker: ID ${params.markerId} (${dictInfo.name}). ` +
         `Size: ${totalDim.toFixed(2)}x${totalDim.toFixed(2)}mm. ` +
         `Square: ${unitSquareSize.toFixed(2)}mm. ` +
-        `Total Z: ${printedTotalZ.toFixed(2)}mm${borderInfo}${labelInfo}`;
+        `Total Z: ${printedTotalZ.toFixed(2)}mm${borderInfo}`;
 }
 
 export function getSingleMarkerBaseFilename() {
@@ -368,8 +344,7 @@ export function getSingleMarkerBaseFilename() {
         z2: Number(uiElements_single.inputs.single.z2.value),
         extrusionType: document.querySelector('input[name="single_extrusion"]:checked').value,
         markerId: Number(uiElements_single.inputs.single.id.value),
-        borderWidth: Number(uiElements_single.inputs.single.borderWidth.value),
-        bottomLabel: uiElements_single.inputs.single.bottomLabel?.checked || false
+        borderWidth: Number(uiElements_single.inputs.single.borderWidth.value)
     };
 
     const dictName = uiElements_single.selects.single.dict.value;
@@ -378,17 +353,13 @@ export function getSingleMarkerBaseFilename() {
         (params.markerId === SPECIAL_MARKERS.PURE_WHITE ? 'PUREWHITE' : 'PUREBLACK') :
         params.markerId;
 
-    const totalZ = calculateTotalZ(params) + (params.bottomLabel ? BOTTOM_LABEL_DEPTH : 0);
+    const totalZ = calculateTotalZ(params);
 
     let filename = `${dictName}-${idPart}_${params.dim}x${params.dim}x${totalZ.toFixed(2)}mm_${params.extrusionType}`;
 
     if (params.borderWidth > MIN_THICKNESS) {
         filename += `_border${params.borderWidth.toFixed(1)}mm`;
     }
-    if (params.bottomLabel) {
-        filename += `_bottomLabel`;
-    }
-
     return filename;
 }
 
@@ -404,13 +375,12 @@ export function getSingleMarkerMetadataExport() {
         extrusionType: document.querySelector('input[name="single_extrusion"]:checked').value,
         borderWidth: Number(uiElements_single.inputs.single.borderWidth.value),
         borderCornerType: document.querySelector('input[name="single_borderCornerType"]:checked').value,
-        markerId: Number(uiElements_single.inputs.single.id.value),
-        bottomLabel: uiElements_single.inputs.single.bottomLabel?.checked || false
+        markerId: Number(uiElements_single.inputs.single.id.value)
     };
 
     const dictName = uiElements_single.selects.single.dict.value;
     const totalZ = calculateTotalZ(params);
-    const printedTotalZ = totalZ + (params.bottomLabel ? BOTTOM_LABEL_DEPTH : 0);
+    const printedTotalZ = totalZ;
     const halfDim = params.dim / 2;
     const halfBorder = params.borderWidth / 2;
     const totalDim = params.dim + 2 * params.borderWidth;
@@ -424,8 +394,6 @@ export function getSingleMarkerMetadataExport() {
             markerDimension: params.dim,
             borderWidth: params.borderWidth,
             borderCornerType: params.borderCornerType,
-            bottomLabel: params.bottomLabel,
-            bottomLabelDepth: params.bottomLabel ? BOTTOM_LABEL_DEPTH : 0,
             z1_baseHeight: params.z1,
             z2_featureHeight: params.z2,
             totalHeight: printedTotalZ,

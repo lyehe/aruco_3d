@@ -2,7 +2,6 @@ import { generateMarkerMesh, getArucoBitPattern, validateMarkerId, MIN_THICKNESS
 import { blackMaterial, whiteMaterial } from './config.js';
 import { getMaxIdFromSelect } from './ui-common-utils.js';
 import { mergeAndDisposeGeometries, createBoxAt, validateDimensions } from './geometry-utils.js';
-import { BOTTOM_LABEL_DEPTH, createEngravedLabelPlate, getBottomLabelMaterial } from './bottom-label-utils.js';
 
 let uiElements_charuco;
 let dictionaryData_charuco;
@@ -31,8 +30,7 @@ export function initCharucoUI(uiElements, dict, mainGroup, onUpdate) {
         uiElements_charuco.inputs.charuco.markerMargin,
         uiElements_charuco.textareas.charuco.ids,
         uiElements_charuco.inputs.charuco.z1,
-        uiElements_charuco.inputs.charuco.z2,
-        uiElements_charuco.inputs.charuco.bottomLabel
+        uiElements_charuco.inputs.charuco.z2
     ];
 
     updateTriggers.forEach(element => {
@@ -60,7 +58,6 @@ export function getCharucoParameters() {
         z1: Number(uiElements_charuco.inputs.charuco.z1.value),
         z2: Number(uiElements_charuco.inputs.charuco.z2.value),
         extrusionType: document.querySelector('input[name="charuco_extrusion"]:checked').value,
-        bottomLabel: uiElements_charuco.inputs.charuco.bottomLabel?.checked || false,
         firstSquareColor: 'black'
     };
 }
@@ -181,7 +178,7 @@ export function updateCharucoBoard() {
         const totalZ = params.extrusionType === "flat" ?
             Math.max(params.z2, MIN_THICKNESS) :
             params.z1 + params.z2;
-        const printedTotalZ = totalZ + (params.bottomLabel ? BOTTOM_LABEL_DEPTH : 0);
+        const printedTotalZ = totalZ;
         const boardWidth = params.squaresX * params.squareSize;
         const boardHeight = params.squaresY * params.squareSize;
 
@@ -196,8 +193,7 @@ export function updateCharucoBoard() {
             `Size: ${boardWidth.toFixed(2)}x${boardHeight.toFixed(2)}mm. ` +
             `Square: ${params.squareSize.toFixed(2)}mm. ` +
             `Total Z: ${printedTotalZ.toFixed(2)}mm. ` +
-            `Markers: ${numWhiteSquares}` +
-            (params.bottomLabel ? `. Label: ${BOTTOM_LABEL_DEPTH.toFixed(2)}mm` : '')
+            `Markers: ${numWhiteSquares}`
         );
         onUpdateCallbacks_charuco.setSaveDisabled(false);
 
@@ -244,19 +240,6 @@ function generateCharucoBoard(params, dictInfo) {
         }
     }
 
-    if (params.bottomLabel) {
-        const labelMesh = createEngravedLabelPlate({
-            text: `ChArUco ${params.squaresX}x${params.squaresY} ${dictInfo.name}`,
-            width: boardWidth,
-            height: boardHeight,
-            material: getBottomLabelMaterial(params.extrusionType),
-            name: 'bottom_label_charuco'
-        });
-
-        if (labelMesh) {
-            mainObjectGroup_charuco.add(labelMesh);
-        }
-    }
 }
 function generateFlatSquare(params, dictInfo, isWhite, centerX, centerY,
     markerIds, markerIndex, markerDim, row, col) {
@@ -446,16 +429,14 @@ export function getCharucoBaseFilename() {
     const dictInfo = getDictionaryInfo();
     const markerDim = params.squareSize - (2 * params.markerMargin);
 
-    const totalZ = (params.extrusionType === "flat" ?
+    const totalZ = params.extrusionType === "flat" ?
         Math.max(params.z2, MIN_THICKNESS) :
-        params.z1 + params.z2) +
-        (params.bottomLabel ? BOTTOM_LABEL_DEPTH : 0);
+        params.z1 + params.z2;
 
     return `${dictInfo.name}_charuco-${params.squaresX}x${params.squaresY}_` +
         `sq${params.squareSize}mm_` +
         `mrg${params.markerMargin}mm_mdim${markerDim.toFixed(1)}mm_` +
-        `${params.extrusionType}_z${totalZ.toFixed(2)}mm` +
-        (params.bottomLabel ? `_bottomLabel` : '');
+        `${params.extrusionType}_z${totalZ.toFixed(2)}mm`;
 }
 
 export function getCharucoMetadataExport() {
@@ -464,10 +445,9 @@ export function getCharucoMetadataExport() {
     const markerIds = params.markerIdsRaw.map(Number);
     const markerDim = params.squareSize - (2 * params.markerMargin);
 
-    const totalZ = (params.extrusionType === "flat" ?
+    const totalZ = params.extrusionType === "flat" ?
         Math.max(params.z2, MIN_THICKNESS) :
-        params.z1 + params.z2) +
-        (params.bottomLabel ? BOTTOM_LABEL_DEPTH : 0);
+        params.z1 + params.z2;
 
     const boardWidth = params.squaresX * params.squareSize;
     const boardHeight = params.squaresY * params.squareSize;
@@ -483,8 +463,6 @@ export function getCharucoMetadataExport() {
             markerMargin: params.markerMargin,
             markerDimension: markerDim,
             firstSquareColor: 'black',
-            bottomLabel: params.bottomLabel,
-            bottomLabelDepth: params.bottomLabel ? BOTTOM_LABEL_DEPTH : 0,
             z1_baseHeight: params.z1,
             z2_featureHeight: params.z2,
             totalHeight: totalZ,
